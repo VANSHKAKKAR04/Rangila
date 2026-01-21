@@ -42,6 +42,7 @@ class ShippingAddress(BaseModel):
 class OrderCreate(BaseModel):
     """Request model for creating order"""
     shipping_address: ShippingAddress
+    payment_method: str = "cod"  # "cod" or "razorpay"
 
 
 class OrderItemResponse(BaseModel):
@@ -68,6 +69,7 @@ class OrderResponse(BaseModel):
     shipping_cents: int
     total_cents: int
     currency: str
+    payment_method: str  # "cod" or "razorpay"
     shipping_address: Optional[ShippingAddress]
     items: List[OrderItemResponse]
     created_at: str
@@ -282,10 +284,15 @@ def create_order(
             reserve_stock(str(variant.id), cart_item.quantity, db)
         
         # Step 5: Create order record
+        # Default payment method is COD (cash on delivery), which is confirmed immediately
+        # Razorpay orders will be updated later when payment is verified
+        payment_method = (order_data.payment_method or "cod").lower().strip()
+        initial_status = OrderStatus.CONFIRMED.value if payment_method == 'cod' else OrderStatus.PENDING.value
+        
         order = Order(
             user_id=user.id,
             order_number=order_number,
-            status=OrderStatus.PENDING.value,
+            status=initial_status,
             subtotal_cents=subtotal,
             tax_cents=tax,
             shipping_cents=shipping,
@@ -298,6 +305,7 @@ def create_order(
             shipping_state=order_data.shipping_address.state,
             shipping_postal_code=order_data.shipping_address.postal_code,
             shipping_country=order_data.shipping_address.country,
+            payment_method=payment_method,
         )
         db.add(order)
         db.flush()  # Get order.id without committing
@@ -361,6 +369,7 @@ def create_order(
             shipping_cents=order.shipping_cents,
             total_cents=order.total_cents,
             currency=order.currency,
+            payment_method=order.payment_method or "cod",  # Default to "cod" for backward compatibility
             shipping_address=ShippingAddress(
                 name=order.shipping_name or "",
                 address_line1=order.shipping_address_line1 or "",
@@ -390,9 +399,12 @@ def create_order(
     except Exception as exc:
         # Any other unexpected error
         db.rollback()
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Order creation error: {error_details}")  # Log full error for debugging
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create order",
+            detail=f"Failed to create order: {str(exc)}",
         ) from exc
 
 
@@ -430,6 +442,7 @@ def list_orders(
                 shipping_cents=order.shipping_cents,
                 total_cents=order.total_cents,
                 currency=order.currency,
+                payment_method=order.payment_method or "cod",  # Default to "cod" for backward compatibility
                 shipping_address=ShippingAddress(
                     name=order.shipping_name or "",
                     address_line1=order.shipping_address_line1 or "",
@@ -484,7 +497,7 @@ def get_order(
     return OrderResponse(
         id=str(order.id),
         order_number=order.order_number,
-        status=order.status.value,
+        status=order.status,  # Status is stored as string
         subtotal_cents=order.subtotal_cents,
         tax_cents=order.tax_cents,
         shipping_cents=order.shipping_cents,
@@ -565,7 +578,7 @@ def cancel_order(
     return OrderResponse(
         id=str(order.id),
         order_number=order.order_number,
-        status=order.status.value,
+        status=order.status,  # Status is stored as string
         subtotal_cents=order.subtotal_cents,
         tax_cents=order.tax_cents,
         shipping_cents=order.shipping_cents,

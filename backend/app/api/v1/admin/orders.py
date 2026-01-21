@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.dependencies import get_admin_user
 from app.db.models.order import Order, OrderItem, OrderStatus
@@ -52,6 +52,7 @@ class OrderResponse(BaseModel):
     shipping_cents: int
     total_cents: int
     currency: str
+    payment_method: str  # "cod" or "razorpay"
     shipping_address: Optional[ShippingAddressResponse]
     items: List[OrderItemResponse]
     created_at: str
@@ -81,12 +82,13 @@ def list_orders(
     admin: User = Depends(get_admin_user),
 ) -> OrderListResponse:
     """List all orders (admin view)."""
-    query = db.query(Order)
+    query = db.query(Order).options(joinedload(Order.items), joinedload(Order.user))
     
     if status:
         try:
+            # Validate status against enum, but compare with string value
             order_status = OrderStatus(status.lower())
-            query = query.filter(Order.status == order_status)
+            query = query.filter(Order.status == order_status.value)  # Compare with string value
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -123,6 +125,7 @@ def list_orders(
                 shipping_cents=order.shipping_cents,
                 total_cents=order.total_cents,
                 currency=order.currency,
+                payment_method=order.payment_method or "cod",  # Default to "cod" for backward compatibility
                 shipping_address=shipping_address,
                 items=[
                     OrderItemResponse(
@@ -151,7 +154,7 @@ def get_order(
     admin: User = Depends(get_admin_user),
 ) -> OrderResponse:
     """Get order details."""
-    order = db.query(Order).filter(Order.id == order_id).first()
+    order = db.query(Order).options(joinedload(Order.items), joinedload(Order.user)).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -19,6 +19,11 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = "postgresql+psycopg2://user:password@localhost:5432/rangila"
+    
+    # Razorpay Configuration
+    razorpay_key_id: str = ""
+    razorpay_key_secret: str = ""
+    razorpay_webhook_secret: str = ""  # For webhook signature verification
 
     class Config:
         env_file = ".env"

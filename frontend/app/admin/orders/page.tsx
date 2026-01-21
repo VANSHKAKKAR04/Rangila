@@ -29,6 +29,7 @@ interface Order {
   user_name: string | null;
   total_cents: number;
   currency: string;
+  payment_method: string; // "cod" or "razorpay"
   created_at: string;
   shipping_address: ShippingAddress | null;
   items: OrderItem[];
@@ -259,6 +260,16 @@ export default function AdminOrdersPage() {
                 <div>
                   <p className="text-sm text-gray-600">Total</p>
                   <p className="font-medium text-lg">{formatPrice(selectedOrder.total_cents)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Payment Method</p>
+                  <p className="font-medium">
+                    {selectedOrder.payment_method === "razorpay" ? (
+                      <span className="text-blue-600">💳 Online Payment (Razorpay)</span>
+                    ) : (
+                      <span className="text-green-600">💰 Cash on Delivery</span>
+                    )}
+                  </p>
                 </div>
               </div>
 

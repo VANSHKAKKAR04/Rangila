@@ -66,6 +66,12 @@ class Order(Base):
     shipping_postal_code = Column(String, nullable=True)
     shipping_country = Column(String, nullable=True)
     
+    # Razorpay payment information
+    razorpay_order_id = Column(String, nullable=True, unique=True, index=True)
+    razorpay_payment_id = Column(String, nullable=True, index=True)
+    razorpay_signature = Column(String, nullable=True)
+    payment_method = Column(String, default="cod", nullable=False)  # razorpay, cod, etc.
+    
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     updated_at = Column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
