@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Link from "next/link";
+import { buildApiUrl } from "../../lib/api";
 
 interface OrderItem {
   id: string;
@@ -60,7 +61,7 @@ function OrdersContent() {
         return;
       }
 
-      const response = await fetch("http://localhost:8000/api/v1/orders?limit=50", {
+      const response = await fetch(buildApiUrl("/api/v1/orders?limit=50"), {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -133,7 +134,7 @@ function OrdersContent() {
         return;
       }
 
-      const response = await fetch(`http://localhost:8000/api/v1/orders/${orderId}/cancel`, {
+      const response = await fetch(buildApiUrl(`/api/v1/orders/${orderId}/cancel`), {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,

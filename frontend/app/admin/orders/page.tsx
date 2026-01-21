@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { buildApiUrl } from "../../../lib/api";
 
 interface OrderItem {
   id: string;
@@ -53,7 +54,7 @@ export default function AdminOrdersPage() {
       const token = getAuthToken();
       if (!token) return;
 
-      const response = await fetch("http://localhost:8000/api/v1/admin/orders?limit=50", {
+      const response = await fetch(buildApiUrl("/api/v1/admin/orders?limit=50"), {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -76,7 +77,7 @@ export default function AdminOrdersPage() {
       if (!token) return;
 
       const response = await fetch(
-        `http://localhost:8000/api/v1/admin/orders/${orderId}/status`,
+        buildApiUrl(`/api/v1/admin/orders/${orderId}/status`),
         {
           method: "PATCH",
           headers: {

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "../../contexts/CartContext";
 import Toast from "../../components/Toast";
+import { buildApiUrl } from "../../../lib/api";
 
 interface ProductDetail {
   id: string;
@@ -40,7 +41,7 @@ export default function ProductDetailPage() {
   const fetchProduct = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:8000/api/v1/products/${slug}`);
+      const response = await fetch(buildApiUrl(`/api/v1/products/${slug}`));
       
       if (response.ok) {
         const data = await response.json();
@@ -120,9 +121,9 @@ export default function ProductDetailPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 bg-white rounded-lg shadow-lg overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 bg-white rounded-lg shadow-lg overflow-hidden">
         {/* Product Image */}
-        <div className="aspect-square bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center">
+        <div className="aspect-square bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center w-full">
           {product.main_image_url ? (
             <img
               src={product.main_image_url}
@@ -139,16 +140,16 @@ export default function ProductDetailPage() {
           {product.category && (
             <span className="text-sm text-gray-500 mb-2">{product.category.name}</span>
           )}
-          <h1 className="text-4xl font-bold mb-4">{product.name}</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">{product.name}</h1>
           
-          <div className="text-3xl font-bold text-primary-600 mb-6">
+          <div className="text-2xl sm:text-3xl font-bold text-primary-600 mb-4 sm:mb-6">
             {formatPrice(product.price_cents)}
           </div>
 
           {product.description && (
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-2">Description</h2>
-              <p className="text-gray-700 whitespace-pre-line">{product.description}</p>
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold mb-2">Description</h2>
+              <p className="text-gray-700 whitespace-pre-line text-sm sm:text-base">{product.description}</p>
             </div>
           )}
 

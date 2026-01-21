@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { buildApiUrl } from "../../../lib/api";
 
 interface User {
   id: string;
@@ -28,7 +29,7 @@ export default function AdminUsersPage() {
       const token = getAuthToken();
       if (!token) return;
 
-      const response = await fetch("http://localhost:8000/api/v1/admin/users?limit=100", {
+      const response = await fetch(buildApiUrl("/api/v1/admin/users?limit=100"), {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -50,7 +51,7 @@ export default function AdminUsersPage() {
       const token = getAuthToken();
       if (!token) return;
 
-      const response = await fetch(`http://localhost:8000/api/v1/admin/users/${userId}`, {
+      const response = await fetch(buildApiUrl(`/api/v1/admin/users/${userId}`), {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,

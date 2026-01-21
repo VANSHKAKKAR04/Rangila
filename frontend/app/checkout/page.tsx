@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { useCart } from "../contexts/CartContext";
 import Toast from "../components/Toast";
+import { buildApiUrl } from "../../lib/api";
 
 declare global {
   interface Window {
@@ -118,7 +119,7 @@ function CheckoutContent() {
     }
 
     // Create Razorpay order
-    const razorpayResponse = await fetch("http://localhost:8000/api/v1/payments/create-razorpay-order", {
+    const razorpayResponse = await fetch(buildApiUrl("/api/v1/payments/create-razorpay-order"), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -150,7 +151,7 @@ function CheckoutContent() {
         handler: async function (response: any) {
           try {
             // Verify payment
-            const verifyResponse = await fetch("http://localhost:8000/api/v1/payments/verify", {
+            const verifyResponse = await fetch(buildApiUrl("/api/v1/payments/verify"), {
               method: "POST",
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -224,7 +225,7 @@ function CheckoutContent() {
       }
 
       // Step 1: Create order
-      const orderResponse = await fetch("http://localhost:8000/api/v1/orders", {
+      const orderResponse = await fetch(buildApiUrl("/api/v1/orders"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -311,9 +312,9 @@ function CheckoutContent() {
         />
       )}
 
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2 text-gray-900">Checkout</h1>
-        <p className="text-gray-600">Complete your order below</p>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 text-gray-900">Checkout</h1>
+        <p className="text-gray-600 text-sm sm:text-base">Complete your order below</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -321,8 +322,8 @@ function CheckoutContent() {
         <div className="lg:col-span-2">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Shipping Address */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-2xl font-bold mb-6 text-gray-900">Shipping Address</h2>
+            <div className="bg-white rounded-xl shadow-md p-4 sm:p-6">
+              <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-900">Shipping Address</h2>
               
               <div className="space-y-4">
                 <div className="form-group">

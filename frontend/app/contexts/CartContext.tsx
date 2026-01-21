@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { buildApiUrl } from "../../lib/api";
 
 interface CartItem {
   id: string;
@@ -50,7 +51,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:8000/api/v1/cart", {
+      const response = await fetch(buildApiUrl("/api/v1/cart"), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -79,7 +80,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/cart/items", {
+      const response = await fetch(buildApiUrl("/api/v1/cart/items"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -111,7 +112,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (!token) return false;
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/cart/items/${itemId}`, {
+      const response = await fetch(buildApiUrl(`/api/v1/cart/items/${itemId}`), {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -136,7 +137,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (!token) return false;
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/cart/items/${itemId}`, {
+      const response = await fetch(buildApiUrl(`/api/v1/cart/items/${itemId}`), {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { buildApiUrl, API_BASE_URL } from "../../../../lib/api";
 
 interface Category {
   id: string;
@@ -67,7 +68,7 @@ export default function NewProductPage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/v1/categories");
+      const response = await fetch(buildApiUrl("/api/v1/categories"));
       if (response.ok) {
         const data = await response.json();
         setCategories(data);
@@ -123,7 +124,7 @@ export default function NewProductPage() {
       }
 
       const slug = generateSlug(newCategoryName);
-      const response = await fetch("http://localhost:8000/api/v1/admin/categories", {
+      const response = await fetch(buildApiUrl("/api/v1/admin/categories"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -213,7 +214,7 @@ export default function NewProductPage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("http://localhost:8000/api/v1/upload/image", {
+      const response = await fetch(buildApiUrl("/api/v1/upload/image"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -238,7 +239,7 @@ export default function NewProductPage() {
 
       const data = await response.json();
       // Return full URL
-      return `http://localhost:8000${data.url}`;
+      return `${API_BASE_URL}${data.url}`;
     } catch (err) {
       console.error("Image upload error:", err);
       if (err instanceof TypeError && err.message.includes("fetch")) {
@@ -307,7 +308,7 @@ export default function NewProductPage() {
         initial_stock: parseInt(formData.initial_stock) || 0,
       };
 
-      const response = await fetch("http://localhost:8000/api/v1/admin/products", {
+      const response = await fetch(buildApiUrl("/api/v1/admin/products"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

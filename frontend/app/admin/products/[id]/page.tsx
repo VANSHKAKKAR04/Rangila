@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import { buildApiUrl, API_BASE_URL } from "../../../../lib/api";
 
 interface Category {
   id: string;
@@ -68,7 +69,7 @@ export default function EditProductPage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/v1/categories");
+      const response = await fetch(buildApiUrl("/api/v1/categories"));
       if (response.ok) {
         const data = await response.json();
         setCategories(data);
@@ -85,7 +86,7 @@ export default function EditProductPage() {
       const token = getAuthToken();
       if (!token) return;
 
-      const response = await fetch(`http://localhost:8000/api/v1/admin/products/${productId}`, {
+      const response = await fetch(buildApiUrl(`/api/v1/admin/products/${productId}`), {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -176,7 +177,7 @@ export default function EditProductPage() {
       }
 
       const slug = generateSlug(newCategoryName);
-      const response = await fetch("http://localhost:8000/api/v1/admin/categories", {
+      const response = await fetch(buildApiUrl("/api/v1/admin/categories"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -253,7 +254,7 @@ export default function EditProductPage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("http://localhost:8000/api/v1/upload/image", {
+      const response = await fetch(buildApiUrl("/api/v1/upload/image"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -275,7 +276,7 @@ export default function EditProductPage() {
       }
 
       const data = await response.json();
-      return `http://localhost:8000${data.url}`;
+      return `${API_BASE_URL}${data.url}`;
     } catch (err) {
       console.error("Image upload error:", err);
       if (err instanceof TypeError && err.message.includes("fetch")) {
@@ -340,7 +341,7 @@ export default function EditProductPage() {
         main_image_url: imageUrl,
       };
 
-      const response = await fetch(`http://localhost:8000/api/v1/admin/products/${productId}`, {
+      const response = await fetch(buildApiUrl(`/api/v1/admin/products/${productId}`), {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,

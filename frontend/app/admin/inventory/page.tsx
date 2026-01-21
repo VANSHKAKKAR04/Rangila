@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { buildApiUrl } from "../../../lib/api";
 
 interface InventoryItem {
   product_id: string;
@@ -28,7 +29,7 @@ export default function AdminInventoryPage() {
       const token = getAuthToken();
       if (!token) return;
 
-      const response = await fetch("http://localhost:8000/api/v1/admin/inventory", {
+      const response = await fetch(buildApiUrl("/api/v1/admin/inventory"), {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -50,7 +51,7 @@ export default function AdminInventoryPage() {
       const token = getAuthToken();
       if (!token) return;
 
-      const response = await fetch(`http://localhost:8000/api/v1/admin/inventory/${productId}`, {
+      const response = await fetch(buildApiUrl(`/api/v1/admin/inventory/${productId}`), {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,

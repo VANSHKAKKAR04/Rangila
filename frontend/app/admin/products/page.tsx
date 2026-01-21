@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { buildApiUrl } from "../../../lib/api";
 
 interface Product {
   id: string;
@@ -37,7 +38,7 @@ export default function AdminProductsPage() {
       const token = getAuthToken();
       if (!token) return;
 
-      const response = await fetch("http://localhost:8000/api/v1/admin/products", {
+      const response = await fetch(buildApiUrl("/api/v1/admin/products"), {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -59,7 +60,7 @@ export default function AdminProductsPage() {
       const token = getAuthToken();
       if (!token) return;
 
-      const response = await fetch(`http://localhost:8000/api/v1/admin/products/${productId}`, {
+      const response = await fetch(buildApiUrl(`/api/v1/admin/products/${productId}`), {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,

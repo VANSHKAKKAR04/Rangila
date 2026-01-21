@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { useCart } from "../contexts/CartContext";
 import Toast from "../components/Toast";
+import { buildApiUrl } from "../../lib/api";
 
 interface Product {
   id: string;
@@ -50,7 +51,7 @@ export default function ProductsPage() {
       setLoading(true);
       
       // Fetch all categories
-      const categoriesResponse = await fetch("http://localhost:8000/api/v1/categories");
+      const categoriesResponse = await fetch(buildApiUrl("/api/v1/categories"));
       if (!categoriesResponse.ok) {
         throw new Error("Failed to fetch categories");
       }
@@ -59,7 +60,7 @@ export default function ProductsPage() {
       // Fetch products for each category
       const categoryProductsPromises = categories.map(async (category) => {
         const productsResponse = await fetch(
-          `http://localhost:8000/api/v1/products?category_slug=${category.slug}&page_size=50`
+          buildApiUrl(`/api/v1/products?category_slug=${category.slug}&page_size=50`)
         );
         if (productsResponse.ok) {
           const data = await productsResponse.json();
@@ -144,9 +145,9 @@ export default function ProductsPage() {
         />
       )}
 
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-4 text-gray-900">Our Catalogue</h1>
-        <p className="text-gray-600 text-lg">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 text-gray-900">Our Catalogue</h1>
+        <p className="text-gray-600 text-base sm:text-lg">
           Browse through our carefully curated collection of gifts
         </p>
       </div>
@@ -166,8 +167,8 @@ export default function ProductsPage() {
           {categoriesWithProducts.map(({ category, products }) => (
             <div key={category.id} className="mb-12">
               {/* Category Header */}
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-3xl font-bold text-gray-900">{category.name}</h2>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">{category.name}</h2>
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => scrollCategory(category.id, "left")}
@@ -203,7 +204,7 @@ export default function ProductsPage() {
                 {products.map((product) => (
                   <div
                     key={product.id}
-                    className="flex-shrink-0 w-64 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 group"
+                    className="flex-shrink-0 w-56 sm:w-64 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 group"
                   >
                     <Link href={`/products/${product.slug}`} className="block">
                       <div className="h-48 bg-gradient-to-br from-primary-100 to-primary-200 relative overflow-hidden">

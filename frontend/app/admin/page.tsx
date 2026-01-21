@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { buildApiUrl } from "../../lib/api";
 
 interface DashboardStats {
   totalProducts: number;
@@ -27,25 +28,25 @@ export default function AdminDashboardPage() {
       if (!token) return;
 
       // Fetch products count
-      const productsRes = await fetch("http://localhost:8000/api/v1/admin/products", {
+      const productsRes = await fetch(buildApiUrl("/api/v1/admin/products"), {
         headers: { Authorization: `Bearer ${token}` },
       });
       const products = await productsRes.json();
 
       // Fetch orders count
-      const ordersRes = await fetch("http://localhost:8000/api/v1/admin/orders?limit=1", {
+      const ordersRes = await fetch(buildApiUrl("/api/v1/admin/orders?limit=1"), {
         headers: { Authorization: `Bearer ${token}` },
       });
       const ordersData = await ordersRes.json();
 
       // Fetch users count
-      const usersRes = await fetch("http://localhost:8000/api/v1/admin/users?limit=1", {
+      const usersRes = await fetch(buildApiUrl("/api/v1/admin/users?limit=1"), {
         headers: { Authorization: `Bearer ${token}` },
       });
       const usersData = await usersRes.json();
 
       // Fetch inventory for low stock check
-      const inventoryRes = await fetch("http://localhost:8000/api/v1/admin/inventory", {
+      const inventoryRes = await fetch(buildApiUrl("/api/v1/admin/inventory"), {
         headers: { Authorization: `Bearer ${token}` },
       });
       const inventory = await inventoryRes.json();
