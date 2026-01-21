@@ -1,0 +1,249 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useCart } from "./contexts/CartContext";
+import Toast from "./components/Toast";
+
+interface Product {
+  id: string;
+  name: string;
+  slug: string;
+  price_cents: number;
+  currency: string;
+  short_description?: string;
+  main_image_url?: string;
+  default_variant_id?: string;
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+}
+
+export default function HomePage() {
+  const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [addingToCart, setAddingToCart] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const { addToCart } = useCart();
+
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    setIsLoggedIn(!!token);
+    fetchFeaturedProducts();
+  }, []);
+
+  const fetchFeaturedProducts = async () => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/v1/products?page=1&page_size=4`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setFeaturedProducts(data.items || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch featured products:", error);
+      // If API fails, products array will remain empty
+    }
+  };
+
+  const handleOrderClick = () => {
+    if (!isLoggedIn) {
+      router.push("/login");
+    } else {
+      router.push("/cart");
+    }
+  };
+
+  const handleAddToCart = async (product: Product, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!product.default_variant_id) {
+      setToast({ message: "Product variant not available", type: "error" });
+      return;
+    }
+
+    setAddingToCart(product.id);
+    const success = await addToCart(product.default_variant_id, 1);
+
+    if (success) {
+      setToast({ message: "Added to cart!", type: "success" });
+    } else {
+      setToast({ message: "Failed to add to cart", type: "error" });
+    }
+    setAddingToCart(null);
+  };
+
+  const formatPrice = (cents: number) => {
+    return `₹${(cents / 100).toLocaleString("en-IN")}`;
+  };
+
+  return (
+    <div>
+      {/* Hero Section */}
+      <section className="bg-gradient-to-r from-primary-500 to-primary-600 text-white py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-5xl font-bold mb-6">Welcome to Rangila Gift Shop</h1>
+          <p className="text-xl mb-8 max-w-2xl mx-auto">
+            Discover curated gifts for every celebration. From birthdays to anniversaries,
+            we have something special for everyone.
+          </p>
+          <div className="flex gap-4 justify-center flex-wrap">
+            <Link
+              href="/products"
+              className="bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg"
+            >
+              Browse Catalogue
+            </Link>
+            <button
+              onClick={handleOrderClick}
+              className="bg-primary-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary-800 transition-colors border-2 border-white shadow-lg"
+            >
+              Order Now
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center mb-12">Why Choose Rangila?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center p-6">
+              <div className="text-4xl mb-4">🎁</div>
+              <h3 className="text-xl font-semibold mb-2">Curated Selection</h3>
+              <p className="text-gray-600">
+                Handpicked gifts that bring joy and make every occasion memorable.
+              </p>
+            </div>
+            <div className="text-center p-6">
+              <div className="text-4xl mb-4">🚚</div>
+              <h3 className="text-xl font-semibold mb-2">Fast Delivery</h3>
+              <p className="text-gray-600">
+                Quick and reliable delivery to your doorstep, anywhere in India.
+              </p>
+            </div>
+            <div className="text-center p-6">
+              <div className="text-4xl mb-4">💝</div>
+              <h3 className="text-xl font-semibold mb-2">Thoughtful Gifts</h3>
+              <p className="text-gray-600">
+                Every gift tells a story and shows how much you care.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Products Preview */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {toast && (
+            <Toast
+              message={toast.message}
+              type={toast.type}
+              onClose={() => setToast(null)}
+            />
+          )}
+          
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-3xl font-bold">Featured Products</h2>
+            <Link
+              href="/products"
+              className="text-primary-600 font-semibold hover:text-primary-700"
+            >
+              View All →
+            </Link>
+          </div>
+          
+          {featuredProducts.length === 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Loading placeholders */}
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
+                  <div className="h-48 bg-gray-200"></div>
+                  <div className="p-4">
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded mb-3"></div>
+                    <div className="flex justify-between items-center">
+                      <div className="h-5 w-16 bg-gray-200 rounded"></div>
+                      <div className="h-8 w-24 bg-gray-200 rounded"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredProducts.map((product) => (
+                <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                  <Link href={`/products/${product.slug}`} className="block">
+                    <div className="h-48 relative overflow-hidden">
+                      {product.main_image_url ? (
+                        <img
+                          src={product.main_image_url}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-white"></div>
+                      )}
+                    </div>
+                  </Link>
+                  <div className="p-4">
+                    <Link href={`/products/${product.slug}`}>
+                      <h3 className="font-semibold mb-2 hover:text-primary-600 transition-colors line-clamp-2">
+                        {product.name}
+                      </h3>
+                    </Link>
+                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                      {product.short_description || "Perfect gift for any occasion"}
+                    </p>
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-primary-600">{formatPrice(product.price_cents)}</span>
+                      <button
+                        onClick={(e) => handleAddToCart(product, e)}
+                        disabled={addingToCart === product.id || !product.default_variant_id}
+                        className="btn-primary text-sm py-2 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {addingToCart === product.id ? (
+                          <span className="flex items-center">
+                            <svg className="animate-spin -ml-1 mr-1 h-3 w-3 text-white" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Adding...
+                          </span>
+                        ) : (
+                          "Add to Cart"
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Call to Action */}
+      <section className="py-16 bg-primary-600 text-white text-center">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold mb-4">Ready to Find the Perfect Gift?</h2>
+          <p className="text-xl mb-8">Browse our extensive collection of thoughtful gifts</p>
+          <Link
+            href="/products"
+            className="bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors inline-block shadow-lg"
+          >
+            Explore Catalogue
+          </Link>
+        </div>
+      </section>
+    </div>
+  );
+}
