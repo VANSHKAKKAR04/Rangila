@@ -18,9 +18,8 @@ def create_app() -> FastAPI:
             "http://localhost:3000",  # Next.js dev server
             "http://127.0.0.1:3000",
             "https://rangila-qwpm.vercel.app",  # Vercel production frontend
-            # Additional origins from environment variable (if set)
-            *([str(origin) for origin in settings.backend_cors_origins] if isinstance(settings.backend_cors_origins, list) and settings.backend_cors_origins else []),
-            *([settings.backend_cors_origins] if isinstance(settings.backend_cors_origins, str) and settings.backend_cors_origins else []),
+            # Additional origins from environment variable (if set, comma-separated)
+            *([url.strip() for url in settings.backend_cors_origins.split(",")] if settings.backend_cors_origins else []),
         ],
         allow_credentials=True,
         allow_methods=["*"],

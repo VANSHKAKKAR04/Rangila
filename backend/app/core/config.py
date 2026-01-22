@@ -1,6 +1,6 @@
 from functools import lru_cache
-from pydantic import BaseSettings, AnyHttpUrl, validator
-from typing import List, Optional, Union
+from pydantic import BaseSettings
+from typing import List, Optional
 
 
 class Settings(BaseSettings):
@@ -8,20 +8,8 @@ class Settings(BaseSettings):
     project_name: str = "Rangila Gift Shop API"
     environment: str = "development"
 
-    # Backend - Allow string or list, default to empty list
-    backend_cors_origins: Union[str, List[AnyHttpUrl]] = []
-    
-    @validator('backend_cors_origins', pre=True)
-    def parse_cors_origins(cls, v):
-        if v is None or v == "":
-            return []
-        if isinstance(v, str):
-            # Try to parse comma-separated URLs
-            try:
-                return [url.strip() for url in v.split(",") if url.strip()]
-            except:
-                return []
-        return v
+    # Backend - Store as optional string to avoid parsing errors
+    backend_cors_origins: Optional[str] = None
 
     # Security
     secret_key: str = "change-me-in-env"
