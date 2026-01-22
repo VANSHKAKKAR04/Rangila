@@ -12,6 +12,7 @@ from app.db.session import engine
 router = APIRouter()
 
 
+@router.get("/init-db", tags=["admin"])
 @router.post("/init-db", tags=["admin"])
 def init_database():
     """
