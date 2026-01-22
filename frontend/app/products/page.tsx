@@ -193,7 +193,7 @@ export default function ProductsPage() {
 
               {/* Horizontal Scrolling Product Cards */}
               <div
-                ref={(el) => (scrollContainerRefs.current[category.id] = el)}
+                ref={(el) => { scrollContainerRefs.current[category.id] = el; }}
                 className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide"
                 style={{
                   scrollbarWidth: "none",
