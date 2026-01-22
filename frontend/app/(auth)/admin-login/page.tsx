@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { buildApiUrl } from "../../../lib/api";
 
 export default function AdminLoginPage() {
   const router = useRouter();
