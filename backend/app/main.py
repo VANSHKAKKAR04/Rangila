@@ -17,7 +17,8 @@ def create_app() -> FastAPI:
         allow_origins=[
             "http://localhost:3000",  # Next.js dev server
             "http://127.0.0.1:3000",
-            # Add production origins here when deploying
+            # Production origins - will be updated after Vercel deployment
+            *([str(origin) for origin in settings.backend_cors_origins] if settings.backend_cors_origins else []),
         ],
         allow_credentials=True,
         allow_methods=["*"],
