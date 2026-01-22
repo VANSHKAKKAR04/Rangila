@@ -31,6 +31,16 @@ def create_app() -> FastAPI:
     @app.get("/health", tags=["system"])
     async def health_check() -> dict:
         return {"status": "ok"}
+    
+    @app.get("/debug/config", tags=["system"])
+    async def debug_config() -> dict:
+        """Debug endpoint to check configuration (remove in production)"""
+        import os
+        return {
+            "database_url_from_env": os.getenv("DATABASE_URL", "NOT SET"),
+            "database_url_from_settings": settings.database_url[:50] + "..." if len(settings.database_url) > 50 else settings.database_url,
+            "secret_key_set": bool(settings.secret_key and settings.secret_key != "change-me-in-env"),
+        }
 
     return app
 
