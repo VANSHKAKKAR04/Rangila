@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCart } from "../contexts/CartContext";
 import Toast from "../components/Toast";
@@ -34,7 +34,7 @@ interface CategoryWithProducts {
   products: Product[];
 }
 
-export default function ProductsPage() {
+function ProductsContent() {
   const searchParams = useSearchParams();
   const categorySlug = searchParams.get("category");
   const searchQuery = searchParams.get("search");
@@ -416,5 +416,20 @@ export default function ProductsPage() {
         }
       `}</style>
     </section>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <section>
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading products...</p>
+        </div>
+      </section>
+    }>
+      <ProductsContent />
+    </Suspense>
   );
 }
