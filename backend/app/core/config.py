@@ -5,7 +5,7 @@ from typing import List, Optional
 
 class Settings(BaseSettings):
     # General
-    project_name: str = "Rangila Gift Shop API"
+    project_name: str = "Rangila Store API"
     environment: str = "development"
 
     # Backend - Store as optional string to avoid parsing errors

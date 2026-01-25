@@ -51,22 +51,27 @@ export default function CategoryNav() {
   return (
     <div className="bg-gray-100 border-b border-gray-200 sticky top-16 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center h-12 overflow-x-auto scrollbar-hide">
-          <Link
-            href="/products"
-            className="flex-shrink-0 px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-white rounded transition-colors whitespace-nowrap"
-          >
-            All Categories
-          </Link>
-          {categories.map((category) => (
+        <div className="relative">
+          <div className="flex items-center h-12 overflow-x-auto scrollbar-hide scroll-smooth">
             <Link
-              key={category.id}
-              href={`/products?category=${category.slug}`}
+              href="/products"
               className="flex-shrink-0 px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-white rounded transition-colors whitespace-nowrap"
             >
-              {category.name}
+              All Categories
             </Link>
-          ))}
+            {categories.map((category) => (
+              <Link
+                key={category.id}
+                href={`/products?category=${category.slug}`}
+                className="flex-shrink-0 px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-white rounded transition-colors whitespace-nowrap"
+              >
+                {category.name}
+              </Link>
+            ))}
+          </div>
+          {/* Gradient fade indicators */}
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-gray-100 to-transparent pointer-events-none"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-100 to-transparent pointer-events-none"></div>
         </div>
       </div>
       <style jsx>{`

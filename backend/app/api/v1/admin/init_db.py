@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.base import Base
-from app.db.models import user, product, cart, order  # Import all models to register them
+from app.db.models import user, product, cart, order, settings  # Import all models to register them
 from app.db.session import engine
 
 router = APIRouter()

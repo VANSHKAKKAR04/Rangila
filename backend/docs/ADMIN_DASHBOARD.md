@@ -1,6 +1,6 @@
 # Admin Dashboard Documentation
 
-This document describes the admin dashboard implementation for the Rangila Gift Shop, including API endpoints, authorization rules, and frontend structure.
+This document describes the admin dashboard implementation for the Rangila Store, including API endpoints, authorization rules, and frontend structure.
 
 ## Overview
 

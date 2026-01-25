@@ -2,11 +2,11 @@ export default function AboutPage() {
   return (
     <section>
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-6">About Rangila Gift Shop</h1>
+        <h1 className="text-4xl font-bold mb-6">About Rangila Store</h1>
         
         <div className="prose prose-lg max-w-none">
           <p className="text-lg text-gray-700 mb-6">
-            At Rangila Gift Shop, we believe that every gift tells a story. Since our founding,
+            At Rangila Store, we believe that every gift tells a story. Since our founding,
             we've been dedicated to helping you find the perfect present for every occasion, whether
             it's a birthday, anniversary, wedding, or just because.
           </p>
@@ -57,7 +57,7 @@ export default function AboutPage() {
 
           <h2 className="text-3xl font-bold mb-4 mt-12">Our Story</h2>
           <p className="text-gray-700 mb-4">
-            Rangila Gift Shop started with a simple idea: make gift-giving easy, thoughtful, and
+            Rangila Store started with a simple idea: make gift-giving easy, thoughtful, and
             joyful. What began as a small boutique has grown into a trusted destination for gift
             lovers across India.
           </p>

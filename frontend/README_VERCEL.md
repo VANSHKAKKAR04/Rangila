@@ -1,6 +1,6 @@
 # Vercel Deployment Guide
 
-This guide will help you deploy the Rangila Gift Shop frontend to Vercel with automatic deployments on every commit.
+This guide will help you deploy the Rangila Store frontend to Vercel with automatic deployments on every commit.
 
 ## Prerequisites
 

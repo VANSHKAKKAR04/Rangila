@@ -1,6 +1,6 @@
 # Rangila Backend API
 
-FastAPI backend for the Rangila Gift Shop application.
+FastAPI backend for the Rangila Store application.
 
 ## Setup
 

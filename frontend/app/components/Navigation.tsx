@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useCart } from "../contexts/CartContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { buildApiUrl } from "../../lib/api";
 
 export default function Navigation() {
@@ -12,9 +13,18 @@ export default function Navigation() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [logoError, setLogoError] = useState(false);
   const { cart } = useCart();
+  const { theme } = useTheme();
 
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Reset logo error when theme changes
+  useEffect(() => {
+    if (theme?.logo_url) {
+      setLogoError(false);
+    }
+  }, [theme?.logo_url]);
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -82,24 +92,35 @@ export default function Navigation() {
 
   return (
     <header className="bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-lg sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         {/* Top Row: Logo, Search, User Actions */}
-        <div className="flex items-center justify-between h-16 gap-4">
-          {/* Logo */}
+        <div className="flex items-center h-16 gap-4 lg:gap-6">
+          {/* Logo - Left Corner */}
           <Link href="/" className="flex items-center space-x-2 hover:opacity-90 transition-opacity flex-shrink-0">
-            <span className="text-2xl">🎁</span>
-            <span className="text-xl font-bold hidden sm:inline">Rangila Gift Shop</span>
+            <div className="relative w-8 h-8 flex items-center justify-center">
+              {theme?.logo_url && !logoError ? (
+                <img 
+                  src={theme.logo_url} 
+                  alt="Rangila Store Logo" 
+                  className="w-full h-full object-contain"
+                  onError={() => setLogoError(true)}
+                />
+              ) : (
+                <span className="text-2xl">🎁</span>
+              )}
+            </div>
+            <span className="text-xl font-bold hidden sm:inline">Rangila Store</span>
           </Link>
 
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-2xl mx-4">
+          {/* Search Bar - Takes maximum available space */}
+          <form onSubmit={handleSearch} className="flex-1 min-w-0 max-w-none">
             <div className="relative">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search for products..."
-                className="w-full px-4 py-2 pl-10 pr-12 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="w-full px-4 py-2.5 pl-10 pr-12 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50 text-base"
               />
               <button
                 type="submit"
@@ -117,7 +138,7 @@ export default function Navigation() {
           </form>
 
           {/* Desktop Navigation - User Actions */}
-          <nav className="hidden md:flex items-center space-x-1 flex-shrink-0">
+          <nav className="hidden md:flex items-center space-x-2 lg:space-x-3 flex-shrink-0 ml-2">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (

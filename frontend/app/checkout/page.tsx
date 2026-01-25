@@ -145,7 +145,7 @@ function CheckoutContent() {
         key: razorpayOrder.key_id,
         amount: razorpayOrder.amount,
         currency: razorpayOrder.currency,
-        name: "Rangila Gift Shop",
+        name: "Rangila Store",
         description: `Order ${razorpayOrder.order_id}`,
         order_id: razorpayOrder.razorpay_order_id,
         handler: async function (response: any) {
