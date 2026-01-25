@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import ProgrammingError, OperationalError
 from typing import Optional
 
 from app.db.session import get_db
@@ -255,25 +256,34 @@ PREDEFINED_THEMES = {
 
 
 @router.get("/theme", response_model=ThemeResponse)
-def get_current_theme(db: Session = Depends(get_db)):
+def get_current_theme(db: Session = Depends(get_db), admin: User = Depends(get_admin_user)):
     """Get the current active theme."""
-    setting = db.query(Settings).filter(Settings.key == "theme").first()
-    
-    if not setting or not setting.is_active:
-        # Return default orange theme
+    try:
+        setting = db.query(Settings).filter(Settings.key == "theme").first()
+        
+        if not setting or not setting.is_active:
+            # Return default orange theme
+            default_theme = PREDEFINED_THEMES["orange"]
+            return ThemeResponse(
+                name=default_theme["name"],
+                colors=ThemeColors(**default_theme["colors"]),
+                logo_url=None,
+            )
+        
+        theme_data = setting.value
+        return ThemeResponse(
+            name=theme_data.get("name", "Orange"),
+            colors=ThemeColors(**theme_data.get("colors", PREDEFINED_THEMES["orange"]["colors"])),
+            logo_url=theme_data.get("logo_url"),
+        )
+    except (ProgrammingError, OperationalError) as e:
+        # Settings table doesn't exist yet - return default theme
         default_theme = PREDEFINED_THEMES["orange"]
         return ThemeResponse(
             name=default_theme["name"],
             colors=ThemeColors(**default_theme["colors"]),
             logo_url=None,
         )
-    
-    theme_data = setting.value
-    return ThemeResponse(
-        name=theme_data.get("name", "Orange"),
-        colors=ThemeColors(**theme_data.get("colors", PREDEFINED_THEMES["orange"]["colors"])),
-        logo_url=theme_data.get("logo_url"),
-    )
 
 
 @router.put("/theme", response_model=ThemeResponse)
@@ -283,34 +293,40 @@ def update_theme(
     admin: User = Depends(get_admin_user),
 ):
     """Update the website theme."""
-    setting = db.query(Settings).filter(Settings.key == "theme").first()
-    
-    theme_value = {
-        "name": theme_data.name,
-        "colors": theme_data.colors.dict(),
-        "logo_url": theme_data.logo_url,
-    }
-    
-    if setting:
-        setting.value = theme_value
-        setting.is_active = True
-    else:
-        setting = Settings(
-            key="theme",
-            value=theme_value,
-            description="Website theme configuration",
-            is_active=True,
+    try:
+        setting = db.query(Settings).filter(Settings.key == "theme").first()
+        
+        theme_value = {
+            "name": theme_data.name,
+            "colors": theme_data.colors.dict(),
+            "logo_url": theme_data.logo_url,
+        }
+        
+        if setting:
+            setting.value = theme_value
+            setting.is_active = True
+        else:
+            setting = Settings(
+                key="theme",
+                value=theme_value,
+                description="Website theme configuration",
+                is_active=True,
+            )
+            db.add(setting)
+        
+        db.commit()
+        db.refresh(setting)
+        
+        return ThemeResponse(
+            name=theme_data.name,
+            colors=theme_data.colors,
+            logo_url=theme_data.logo_url,
         )
-        db.add(setting)
-    
-    db.commit()
-    db.refresh(setting)
-    
-    return ThemeResponse(
-        name=theme_data.name,
-        colors=theme_data.colors,
-        logo_url=theme_data.logo_url,
-    )
+    except (ProgrammingError, OperationalError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Settings table does not exist. Please call /api/v1/admin/init-db to create database tables. Error: {str(e)}"
+        )
 
 
 @router.get("/theme/presets")
