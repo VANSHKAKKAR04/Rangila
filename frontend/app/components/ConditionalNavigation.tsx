@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Navigation from "./Navigation";
+import CategoryNav from "./CategoryNav";
 
 export default function ConditionalNavigation() {
   const pathname = usePathname();
@@ -11,5 +12,10 @@ export default function ConditionalNavigation() {
     return null;
   }
   
-  return <Navigation />;
+  return (
+    <>
+      <Navigation />
+      <CategoryNav />
+    </>
+  );
 }

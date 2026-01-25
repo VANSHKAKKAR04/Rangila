@@ -4,12 +4,14 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useCart } from "../contexts/CartContext";
+import { buildApiUrl } from "../../lib/api";
 
 export default function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { cart } = useCart();
 
   const [isAdmin, setIsAdmin] = useState(false);
@@ -59,6 +61,14 @@ export default function Navigation() {
     router.push("/login");
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery("");
+    }
+  };
+
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/products", label: "Catalogue" },
@@ -74,15 +84,41 @@ export default function Navigation() {
   return (
     <header className="bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        {/* Top Row: Logo, Search, User Actions */}
+        <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2 hover:opacity-90 transition-opacity">
+          <Link href="/" className="flex items-center space-x-2 hover:opacity-90 transition-opacity flex-shrink-0">
             <span className="text-2xl">🎁</span>
-            <span className="text-xl font-bold">Rangila Gift Shop</span>
+            <span className="text-xl font-bold hidden sm:inline">Rangila Gift Shop</span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1">
+          {/* Search Bar */}
+          <form onSubmit={handleSearch} className="flex-1 max-w-2xl mx-4">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search for products..."
+                className="w-full px-4 py-2 pl-10 pr-12 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50"
+              />
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-primary-600 hover:bg-primary-100 rounded"
+                aria-label="Search"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </form>
+
+          {/* Desktop Navigation - User Actions */}
+          <nav className="hidden md:flex items-center space-x-1 flex-shrink-0">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -211,6 +247,30 @@ export default function Navigation() {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <nav className="md:hidden py-4 border-t border-white/20 space-y-2">
+            {/* Mobile Search */}
+            <form onSubmit={handleSearch} className="px-4 pb-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search for products..."
+                  className="w-full px-4 py-2 pl-10 pr-12 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50"
+                />
+                <button
+                  type="submit"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-primary-600 hover:bg-primary-100 rounded"
+                  aria-label="Search"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </button>
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </form>
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
