@@ -77,6 +77,34 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handleDelete = async (productId: string) => {
+    if (!confirm("Are you sure you want to delete this product? This will deactivate it.")) {
+      return;
+    }
+
+    try {
+      const token = getAuthToken();
+      if (!token) return;
+
+      const response = await fetch(buildApiUrl(`/api/v1/admin/products/${productId}`), {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        fetchProducts();
+      } else {
+        const error = await response.json().catch(() => ({ detail: "Failed to delete product" }));
+        alert(error.detail || "Failed to delete product");
+      }
+    } catch (err) {
+      console.error("Failed to delete product:", err);
+      alert("Failed to delete product");
+    }
+  };
+
   const formatPrice = (cents: number) => {
     return `₹${(cents / 100).toLocaleString("en-IN")}`;
   };
@@ -163,18 +191,26 @@ export default function AdminProductsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleToggleActive(product.id, product.is_active)}
-                      className="text-primary-600 hover:text-primary-900 mr-4"
-                    >
-                      {product.is_active ? "Deactivate" : "Activate"}
-                    </button>
-                    <Link
-                      href={`/admin/products/${product.id}`}
-                      className="text-primary-600 hover:text-primary-900"
-                    >
-                      Edit
-                    </Link>
+                    <div className="flex items-center justify-end gap-3">
+                      <button
+                        onClick={() => handleToggleActive(product.id, product.is_active)}
+                        className="text-primary-600 hover:text-primary-900"
+                      >
+                        {product.is_active ? "Deactivate" : "Activate"}
+                      </button>
+                      <Link
+                        href={`/admin/products/${product.id}`}
+                        className="text-primary-600 hover:text-primary-900"
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(product.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

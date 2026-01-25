@@ -1,13 +1,15 @@
 """
 Admin API endpoints for inventory management.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_admin_user
-from app.db.models.product import Inventory, Product, ProductVariant
+from app.db.models.product import Category, Inventory, Product, ProductVariant
 from app.db.models.user import User
 from app.db.session import get_db
 
@@ -24,6 +26,8 @@ class InventoryResponse(BaseModel):
     product_id: str
     product_name: str
     product_slug: str
+    category_id: str
+    category_name: str
     stock_available: int
 
     class Config:
@@ -36,18 +40,19 @@ class InventoryResponse(BaseModel):
 def list_inventory(
     skip: int = 0,
     limit: int = 100,
+    category_id: Optional[str] = Query(None, description="Filter by category ID"),
     db: Session = Depends(get_db),
     admin: User = Depends(get_admin_user),
 ) -> list[InventoryResponse]:
-    """List all products with their available stock."""
-    # Get all active products
-    products = (
-        db.query(Product)
-        .filter(Product.is_active.is_(True))
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    """List all products with their available stock, optionally filtered by category."""
+    # Build query
+    query = db.query(Product).filter(Product.is_active.is_(True))
+    
+    # Filter by category if provided
+    if category_id:
+        query = query.filter(Product.category_id == category_id)
+    
+    products = query.offset(skip).limit(limit).all()
     
     result = []
     for product in products:
@@ -64,6 +69,8 @@ def list_inventory(
                 product_id=str(product.id),
                 product_name=product.name,
                 product_slug=product.slug,
+                category_id=str(product.category_id),
+                category_name=product.category.name,
                 stock_available=total_available,
             )
         )
@@ -97,6 +104,8 @@ def get_inventory(
         product_id=str(product.id),
         product_name=product.name,
         product_slug=product.slug,
+        category_id=str(product.category_id),
+        category_name=product.category.name,
         stock_available=total_available,
     )
 
@@ -167,5 +176,7 @@ def update_inventory(
         product_id=str(product.id),
         product_name=product.name,
         product_slug=product.slug,
+        category_id=str(product.category_id),
+        category_name=product.category.name,
         stock_available=inventory_data.stock_available,
     )
