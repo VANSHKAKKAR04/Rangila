@@ -100,6 +100,7 @@ export default function Navigation() {
             <div className="relative w-8 h-8 flex items-center justify-center">
               {theme?.logo_url && !logoError ? (
                 <img 
+                  key={theme.logo_url}
                   src={theme.logo_url} 
                   alt="Rangila Store Logo" 
                   className="w-full h-full object-contain"

@@ -47,17 +47,37 @@ export default function AdminThemePage() {
 
   const fetchCurrentTheme = async () => {
     try {
-      const response = await fetch(buildApiUrl("/api/v1/admin/theme"), {
-        headers: { Authorization: `Bearer ${getAuthToken()}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setCurrentTheme(data);
-        setLogoUrl(data.logo_url || "");
-        setLogoPreview(data.logo_url || null);
+      const token = getAuthToken();
+      if (!token) {
+        setError("Please log in to access theme settings");
+        setLoading(false);
+        return;
       }
+
+      const response = await fetch(buildApiUrl("/api/v1/admin/theme"), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError("Authentication failed. Please log in again.");
+        } else {
+          setError(`Failed to fetch theme: ${response.statusText}`);
+        }
+        return;
+      }
+
+      const data = await response.json();
+      setCurrentTheme(data);
+      // Ensure logo URL is a full URL if it exists
+      const logoUrl = data.logo_url 
+        ? (data.logo_url.startsWith("http") ? data.logo_url : buildApiUrl(data.logo_url))
+        : "";
+      setLogoUrl(logoUrl);
+      setLogoPreview(logoUrl || null);
     } catch (err) {
       console.error("Failed to fetch theme:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch theme");
     } finally {
       setLoading(false);
     }
@@ -101,8 +121,14 @@ export default function AdminThemePage() {
 
       const updatedTheme = await response.json();
       setCurrentTheme(updatedTheme);
-      // Reload page to apply theme
-      window.location.reload();
+      // Trigger theme refresh in ThemeContext
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("themeUpdated"));
+      }
+      // Small delay before reload to ensure event is dispatched
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update theme");
     } finally {
@@ -148,7 +174,8 @@ export default function AdminThemePage() {
       }
 
       const data = await response.json();
-      const uploadedUrl = buildApiUrl(data.url);
+      // Ensure we have a full URL - if it's already a full URL, use it; otherwise build it
+      const uploadedUrl = data.url.startsWith("http") ? data.url : buildApiUrl(data.url);
       
       // Update logo URL with the uploaded file URL
       setLogoUrl(uploadedUrl);

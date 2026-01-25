@@ -25,34 +25,58 @@ interface Theme {
 interface ThemeContextType {
   theme: Theme | null;
   loading: boolean;
+  refreshTheme: () => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
   theme: null,
   loading: true,
+  refreshTheme: async () => {},
 });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchTheme();
-  }, []);
-
   const fetchTheme = async () => {
     try {
       const response = await fetch(buildApiUrl("/api/v1/theme"));
       if (response.ok) {
         const data = await response.json();
+        // Ensure logo URL is a full URL if it exists
+        if (data.logo_url && !data.logo_url.startsWith("http")) {
+          data.logo_url = buildApiUrl(data.logo_url);
+        }
         setTheme(data);
         applyTheme(data);
       }
     } catch (error) {
       console.error("Failed to fetch theme:", error);
+      // Don't fail completely - use default theme
+      setTheme(null);
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchTheme();
+
+    // Listen for theme updates from admin panel
+    const handleThemeUpdate = () => {
+      fetchTheme();
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("themeUpdated", handleThemeUpdate);
+      return () => {
+        window.removeEventListener("themeUpdated", handleThemeUpdate);
+      };
+    }
+  }, []);
+
+  const refreshTheme = async () => {
+    await fetchTheme();
   };
 
   const applyTheme = (themeData: Theme) => {
@@ -65,7 +89,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, loading }}>
+    <ThemeContext.Provider value={{ theme, loading, refreshTheme }}>
       {children}
     </ThemeContext.Provider>
   );
