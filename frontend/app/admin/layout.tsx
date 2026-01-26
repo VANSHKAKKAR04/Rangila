@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import AdminProtectedRoute from "../components/AdminProtectedRoute";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
@@ -29,14 +31,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="min-h-screen bg-gray-50">
         {/* Admin Header */}
         <header className="bg-white border-b border-gray-200 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="w-full px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  aria-label="Toggle sidebar"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
                 <Link href="/admin" className="text-xl font-bold text-primary-600">
                   Admin Dashboard
                 </Link>
-                <span className="text-gray-400">|</span>
-                <Link href="/" className="text-gray-600 hover:text-primary-600">
+                <span className="hidden sm:inline text-gray-400">|</span>
+                <Link href="/" className="hidden sm:inline text-gray-600 hover:text-primary-600">
                   View Site
                 </Link>
               </div>
@@ -50,9 +61,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        <div className="flex">
+        <div className="flex relative">
+          {/* Mobile Sidebar Overlay */}
+          {sidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+
           {/* Sidebar */}
-          <aside className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-4rem)]">
+          <aside
+            className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-4rem)] transform transition-transform duration-300 ease-in-out ${
+              sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+            }`}
+          >
             <nav className="p-4 space-y-1">
               {navLinks.map((link) => {
                 const isActive = pathname === link.href;
@@ -60,6 +83,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <Link
                     key={link.href}
                     href={link.href}
+                    onClick={() => setSidebarOpen(false)}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                       isActive
                         ? "bg-primary-50 text-primary-600 font-semibold"
@@ -75,7 +99,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </aside>
 
           {/* Main Content */}
-          <main className="flex-1 p-8">{children}</main>
+          <main className="flex-1 w-full min-w-0 p-4 sm:p-6 lg:p-8 overflow-x-auto">{children}</main>
         </div>
       </div>
     </AdminProtectedRoute>

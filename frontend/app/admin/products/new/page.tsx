@@ -35,6 +35,8 @@ export default function NewProductPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
     fetchCategories();
@@ -166,30 +168,125 @@ export default function NewProductPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
-      const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
-      if (!validTypes.includes(file.type)) {
-        setError("Please select a valid image file (JPEG, PNG, GIF, or WebP)");
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setError("Image size must be less than 5MB");
-        return;
-      }
-
-      setImageFile(file);
-      setError("");
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      processImageFile(file);
     }
   };
+
+  const processImageFile = (file: File) => {
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      setError("Please select a valid image file (JPEG, PNG, GIF, or WebP)");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image size must be less than 5MB");
+      return;
+    }
+
+    setImageFile(file);
+    setError("");
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const startCamera = async () => {
+    try {
+      // Try to get camera access - will use default camera (webcam on PC, back camera preference on mobile)
+      // First try environment (back camera on mobile), then fallback to user (front camera/webcam)
+      let stream: MediaStream | null = null;
+      
+      try {
+        // Try back camera first (for mobile devices)
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+        });
+      } catch (envError) {
+        // Fallback to user-facing camera (webcam on PC, front camera on mobile)
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "user" },
+          });
+        } catch (userError) {
+          // Final fallback: use default camera (no facingMode specified)
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
+        }
+      }
+      
+      if (stream) {
+        setCameraStream(stream);
+        setShowCamera(true);
+        setError("");
+      } else {
+        throw new Error("Could not access camera");
+      }
+    } catch (err) {
+      console.error("Error accessing camera:", err);
+      setError("Unable to access camera. Please check permissions or use file upload instead.");
+    }
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+      setCameraStream(null);
+    }
+    setShowCamera(false);
+  };
+
+  const capturePhoto = () => {
+    const video = document.getElementById("camera-video") as HTMLVideoElement;
+    if (!video || !cameraStream) return;
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0);
+
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
+          processImageFile(file);
+          stopCamera();
+        }
+      },
+      "image/jpeg",
+      0.9
+    );
+  };
+
+  // Set video source when camera stream is available
+  useEffect(() => {
+    if (showCamera && cameraStream) {
+      const video = document.getElementById("camera-video") as HTMLVideoElement;
+      if (video) {
+        video.srcObject = cameraStream;
+      }
+    }
+  }, [showCamera, cameraStream]);
+
+  // Cleanup camera stream on unmount
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [cameraStream]);
 
   const uploadImage = async (file: File): Promise<string | null> => {
     try {
@@ -518,15 +615,73 @@ export default function NewProductPage() {
               Product Image
             </label>
             <div className="space-y-4">
-              <input
-                type="file"
-                id="image"
-                name="image"
-                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-                onChange={handleImageChange}
-                className="form-input"
-              />
-              {imagePreview && (
+              {/* Camera Capture Button */}
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={startCamera}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>Take Photo</span>
+                </button>
+                <label className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors cursor-pointer flex items-center space-x-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  <span>Upload from Device</span>
+                  <input
+                    type="file"
+                    id="image"
+                    name="image"
+                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {/* Camera Preview */}
+              {showCamera && cameraStream && (
+                <div className="relative bg-black rounded-lg overflow-hidden">
+                  <video
+                    id="camera-video"
+                    autoPlay
+                    playsInline
+                    className="w-full max-w-md mx-auto"
+                    style={{ maxHeight: "400px" }}
+                  />
+                  <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-4">
+                    <button
+                      type="button"
+                      onClick={capturePhoto}
+                      className="px-6 py-3 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-lg"
+                      aria-label="Capture photo"
+                    >
+                      <svg className="w-8 h-8 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={stopCamera}
+                      className="px-6 py-3 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors shadow-lg"
+                      aria-label="Close camera"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Image Preview */}
+              {imagePreview && !showCamera && (
                 <div className="mt-2">
                   <img
                     src={imagePreview}
@@ -539,7 +694,7 @@ export default function NewProductPage() {
                 <p className="text-sm text-gray-500">Uploading image...</p>
               )}
               <p className="text-xs text-gray-500">
-                Upload an image from your device (JPEG, PNG, GIF, or WebP, max 5MB)
+                Take a photo with your camera or upload an image from your device (JPEG, PNG, GIF, or WebP, max 5MB)
               </p>
             </div>
           </div>
