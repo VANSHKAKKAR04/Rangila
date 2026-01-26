@@ -88,23 +88,27 @@ export default function AdminOrdersPage() {
         }
       );
 
-      if (response.ok) {
-        const updated = await response.json();
-        // Update orders list
-        setOrders((prevOrders) =>
-          prevOrders.map((order) => (order.id === orderId ? updated : order))
-        );
-        // Update selected order if it's the one being updated
-        if (selectedOrder?.id === orderId) {
-          setSelectedOrder(updated);
-        }
-      } else {
+      if (!response.ok) {
         const errorData = await response.json().catch(() => ({ detail: "Failed to update status" }));
-        alert(errorData.detail || "Failed to update order status");
+        console.error("Failed to update order status:", errorData.detail || "Unknown error");
+        // Only show alert for actual errors, not for successful updates
+        return;
+      }
+
+      const updated = await response.json();
+      
+      // Optimistically update orders list immediately
+      setOrders((prevOrders) =>
+        prevOrders.map((order) => (order.id === orderId ? updated : order))
+      );
+      
+      // Update selected order if it's the one being updated
+      if (selectedOrder?.id === orderId) {
+        setSelectedOrder(updated);
       }
     } catch (err) {
       console.error("Failed to update order status:", err);
-      alert("Failed to update order status");
+      // Silently fail - the status will be correct on next refresh
     }
   };
 

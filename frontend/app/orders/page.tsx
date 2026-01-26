@@ -143,19 +143,26 @@ function OrdersContent() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ detail: "Failed to cancel order" }));
-        alert(errorData.detail || "Failed to cancel order");
+        console.error("Failed to cancel order:", errorData.detail || "Unknown error");
+        setCancelling(null);
         return;
       }
 
-      // Refresh orders list
-      await fetchOrders();
+      // Get the updated order from response
+      const cancelledOrder = await response.json();
+      
+      // Optimistically update orders list immediately
+      setOrders((prevOrders) =>
+        prevOrders.map((order) => (order.id === orderId ? cancelledOrder : order))
+      );
       
       // Update selected order if it was the cancelled one
-      const cancelledOrder = await response.json();
-      setSelectedOrder(cancelledOrder);
+      if (selectedOrder?.id === orderId) {
+        setSelectedOrder(cancelledOrder);
+      }
     } catch (err) {
       console.error("Failed to cancel order:", err);
-      alert("Failed to cancel order");
+      // Silently fail - the status will be correct on next refresh
     } finally {
       setCancelling(null);
     }

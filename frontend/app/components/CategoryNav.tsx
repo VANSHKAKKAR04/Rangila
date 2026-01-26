@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { buildApiUrl } from "../../lib/api";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface Category {
   id: string;
@@ -16,6 +17,9 @@ export default function CategoryNav() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const lastScrollYRef = useRef(0);
+  const { theme } = useTheme();
 
   useEffect(() => {
     fetchCategories();
@@ -33,6 +37,26 @@ export default function CategoryNav() {
       };
     }
   }, [categories]);
+
+  // Handle scroll to hide/show category navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const lastScrollY = lastScrollYRef.current;
+      
+      // Hide when scrolling down, show when scrolling up
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsVisible(false);
+      } else if (currentScrollY < lastScrollY) {
+        setIsVisible(true);
+      }
+      
+      lastScrollYRef.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const fetchCategories = async () => {
     try {
@@ -71,9 +95,21 @@ export default function CategoryNav() {
     }
   };
 
+  // Get theme colors for styling
+  const bgColor = theme?.colors?.primary_200 || "#fed7aa"; // Lighter shade (primary-200)
+  const borderColor = theme?.colors?.primary_300 || "#fdba74"; // Slightly darker for border
+  const hoverBgColor = theme?.colors?.primary_50 || "#fff7ed"; // Very light for hover
+
   if (loading) {
     return (
-      <div className="bg-gray-100 border-b border-gray-200">
+      <div 
+        className="border-b sticky top-16 z-40 transition-transform duration-300"
+        style={{ 
+          backgroundColor: bgColor,
+          borderColor: borderColor,
+          transform: isVisible ? "translateY(0)" : "translateY(-100%)"
+        }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-12 overflow-x-auto">
             <div className="flex space-x-4 animate-pulse">
@@ -88,18 +124,29 @@ export default function CategoryNav() {
   }
 
   return (
-    <div className="bg-gray-100 border-b border-gray-200 sticky top-16 z-40">
+    <div 
+      className="border-b sticky top-16 z-40 transition-transform duration-300"
+      style={{ 
+        backgroundColor: bgColor,
+        borderColor: borderColor,
+        transform: isVisible ? "translateY(0)" : "translateY(-100%)"
+      }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative">
           {/* Left Arrow */}
           {showLeftArrow && (
             <button
               onClick={scrollLeft}
-              className="absolute left-0 top-0 bottom-0 z-10 bg-gray-100 hover:bg-gray-200 px-2 flex items-center justify-center transition-colors"
+              className="absolute left-0 top-0 bottom-0 z-10 px-2 flex items-center justify-center transition-colors backdrop-blur-sm"
+              style={{
+                backgroundColor: `${hoverBgColor}cc`, // Semi-transparent
+              }}
               aria-label="Scroll left"
             >
               <svg
-                className="w-5 h-5 text-gray-700"
+                className="w-5 h-5"
+                style={{ color: theme?.colors?.primary_700 || "#c2410c" }}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -118,11 +165,15 @@ export default function CategoryNav() {
           {showRightArrow && (
             <button
               onClick={scrollRight}
-              className="absolute right-0 top-0 bottom-0 z-10 bg-gray-100 hover:bg-gray-200 px-2 flex items-center justify-center transition-colors"
+              className="absolute right-0 top-0 bottom-0 z-10 px-2 flex items-center justify-center transition-colors backdrop-blur-sm"
+              style={{
+                backgroundColor: `${hoverBgColor}cc`, // Semi-transparent
+              }}
               aria-label="Scroll right"
             >
               <svg
-                className="w-5 h-5 text-gray-700"
+                className="w-5 h-5"
+                style={{ color: theme?.colors?.primary_700 || "#c2410c" }}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -143,7 +194,18 @@ export default function CategoryNav() {
           >
             <Link
               href="/products"
-              className="flex-shrink-0 px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-white rounded transition-colors whitespace-nowrap"
+              className="flex-shrink-0 px-4 py-2 text-sm font-medium rounded transition-colors whitespace-nowrap"
+              style={{
+                color: theme?.colors?.primary_800 || "#9a3412",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = hoverBgColor;
+                e.currentTarget.style.color = theme?.colors?.primary_600 || "#ea580c";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = theme?.colors?.primary_800 || "#9a3412";
+              }}
             >
               All Categories
             </Link>
@@ -151,7 +213,18 @@ export default function CategoryNav() {
               <Link
                 key={category.id}
                 href={`/products?category=${category.slug}`}
-                className="flex-shrink-0 px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-white rounded transition-colors whitespace-nowrap"
+                className="flex-shrink-0 px-4 py-2 text-sm font-medium rounded transition-colors whitespace-nowrap"
+                style={{
+                  color: theme?.colors?.primary_800 || "#9a3412",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = hoverBgColor;
+                  e.currentTarget.style.color = theme?.colors?.primary_600 || "#ea580c";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = theme?.colors?.primary_800 || "#9a3412";
+                }}
               >
                 {category.name}
               </Link>
