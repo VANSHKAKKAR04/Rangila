@@ -77,10 +77,10 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div>
+    <div className="w-full max-w-full overflow-x-auto">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">Users</h1>
 
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="bg-white rounded-lg shadow-md overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
