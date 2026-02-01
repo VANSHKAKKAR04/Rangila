@@ -88,15 +88,15 @@ export default function AdminProductsPage() {
 
       const response = await fetch(buildApiUrl(`/api/v1/admin/products/${productId}`), {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (response.ok) {
         fetchProducts();
       } else {
-        const error = await response.json().catch(() => ({ detail: "Failed to delete product" }));
+        const error = await response.json().catch(() => ({
+          detail: "Failed to delete product",
+        }));
         alert(error.detail || "Failed to delete product");
       }
     } catch (err) {
@@ -118,10 +118,13 @@ export default function AdminProductsPage() {
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-        <Link href="/admin/products/new" className="btn-primary">
+    <div className="max-w-full overflow-x-hidden">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          Products
+        </h1>
+        <Link href="/admin/products/new" className="btn-primary w-full sm:w-auto text-center">
           Add New Product
         </Link>
       </div>
@@ -132,8 +135,9 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
+      {/* TABLE WRAPPER */}
+      <div className="bg-white rounded-lg shadow-md overflow-x-auto">
+        <table className="min-w-[900px] divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -156,6 +160,7 @@ export default function AdminProductsPage() {
               </th>
             </tr>
           </thead>
+
           <tbody className="bg-white divide-y divide-gray-200">
             {products.length === 0 ? (
               <tr>
@@ -166,20 +171,29 @@ export default function AdminProductsPage() {
             ) : (
               products.map((product) => (
                 <tr key={product.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                    <div className="text-sm text-gray-500">{product.slug}</div>
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-medium text-gray-900">
+                      {product.name}
+                    </div>
+                    <div className="text-sm text-gray-500 break-all">
+                      {product.slug}
+                    </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+
+                  <td className="px-6 py-4 text-sm text-gray-500">
                     {product.category_name}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+
+                  <td className="px-6 py-4 text-sm text-gray-900">
                     {formatPrice(product.price_cents)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {product.variants.length} variant{product.variants.length !== 1 ? "s" : ""}
+
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {product.variants.length} variant
+                    {product.variants.length !== 1 ? "s" : ""}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+
+                  <td className="px-6 py-4">
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         product.is_active
@@ -190,20 +204,25 @@ export default function AdminProductsPage() {
                       {product.is_active ? "Active" : "Inactive"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end gap-3">
+
+                  <td className="px-6 py-4 text-right text-sm font-medium">
+                    <div className="flex flex-wrap justify-end gap-3">
                       <button
-                        onClick={() => handleToggleActive(product.id, product.is_active)}
+                        onClick={() =>
+                          handleToggleActive(product.id, product.is_active)
+                        }
                         className="text-primary-600 hover:text-primary-900"
                       >
                         {product.is_active ? "Deactivate" : "Activate"}
                       </button>
+
                       <Link
                         href={`/admin/products/${product.id}`}
                         className="text-primary-600 hover:text-primary-900"
                       >
                         Edit
                       </Link>
+
                       <button
                         onClick={() => handleDelete(product.id)}
                         className="text-red-600 hover:text-red-900"
