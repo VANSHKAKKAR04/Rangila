@@ -24,7 +24,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/orders", label: "Orders", icon: "📝" },
     { href: "/admin/users", label: "Users", icon: "👥" },
     { href: "/admin/theme", label: "Theme", icon: "🎨" },
+    { href: "/", label: "View Site", icon: "🌐", external: true },
   ];
+  
 
   return (
     <AdminProtectedRoute>
@@ -77,24 +79,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             }`}
           >
             <nav className="p-4 space-y-1">
-              {navLinks.map((link) => {
-                const isActive = pathname === link.href;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                      isActive
-                        ? "bg-primary-50 text-primary-600 font-semibold"
-                        : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    <span>{link.icon}</span>
-                    <span>{link.label}</span>
-                  </Link>
-                );
-              })}
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setSidebarOpen(false)}
+                  target={link.external ? "_blank" : undefined}
+                  rel={link.external ? "noopener noreferrer" : undefined}
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                    isActive
+                      ? "bg-primary-50 text-primary-600 font-semibold"
+                      : "text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  <span>{link.icon}</span>
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
+
             </nav>
           </aside>
 
