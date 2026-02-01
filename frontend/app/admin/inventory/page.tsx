@@ -83,20 +83,25 @@ export default function AdminInventoryPage() {
       const token = getAuthToken();
       if (!token) return;
 
-      const response = await fetch(buildApiUrl(`/api/v1/admin/inventory/${productId}`), {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ stock_available: newStock }),
-      });
+      const response = await fetch(
+        buildApiUrl(`/api/v1/admin/inventory/${productId}`),
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ stock_available: newStock }),
+        }
+      );
 
       if (response.ok) {
         setEditingId(null);
         fetchInventory();
       } else {
-        const errorData = await response.json().catch(() => ({ detail: "Failed to update stock" }));
+        const errorData = await response.json().catch(() => ({
+          detail: "Failed to update stock",
+        }));
         alert(errorData.detail || "Failed to update stock");
       }
     } catch (err) {
@@ -114,11 +119,17 @@ export default function AdminInventoryPage() {
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Inventory Management</h1>
-        <div className="flex items-center gap-4">
-          <label className="text-sm font-medium text-gray-700">Filter by Category:</label>
+    <div className="max-w-full overflow-x-hidden">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">
+          Inventory Management
+        </h1>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+          <label className="text-sm font-medium text-gray-700">
+            Filter by Category:
+          </label>
           <select
             value={selectedCategoryId}
             onChange={(e) => setSelectedCategoryId(e.target.value)}
@@ -134,31 +145,36 @@ export default function AdminInventoryPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
+      {/* Table */}
+      <div className="bg-white rounded-lg shadow-md overflow-x-auto">
+        <table className="min-w-[800px] divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Product Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Category
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Slug
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Available Stock
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                 Actions
               </th>
             </tr>
           </thead>
+
           <tbody className="bg-white divide-y divide-gray-200">
             {inventory.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                <td
+                  colSpan={5}
+                  className="px-3 sm:px-6 py-4 text-center text-gray-500"
+                >
                   No inventory records found.
                 </td>
               </tr>
@@ -170,22 +186,33 @@ export default function AdminInventoryPage() {
                     item.stock_available < 10 ? "bg-orange-50" : ""
                   }`}
                 >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{item.product_name}</div>
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      {item.product_name}
+                    </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{item.category_name}</div>
+
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">
+                      {item.category_name}
+                    </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{item.product_slug}</div>
+
+                  <td className="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">
+                      {item.product_slug}
+                    </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                     {editingId === item.product_id ? (
                       <input
                         type="number"
                         value={newStock}
-                        onChange={(e) => setNewStock(parseInt(e.target.value) || 0)}
-                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg"
+                        onChange={(e) =>
+                          setNewStock(parseInt(e.target.value) || 0)
+                        }
+                        className="w-24 sm:w-32 px-3 py-2 border border-gray-300 rounded-lg"
                         min="0"
                         autoFocus
                       />
@@ -203,11 +230,14 @@ export default function AdminInventoryPage() {
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     {editingId === item.product_id ? (
-                      <div className="flex justify-end space-x-2">
+                      <div className="flex flex-col sm:flex-row items-end gap-2 sm:gap-3">
                         <button
-                          onClick={() => handleUpdateStock(item.product_id)}
+                          onClick={() =>
+                            handleUpdateStock(item.product_id)
+                          }
                           className="text-green-600 hover:text-green-900 font-semibold"
                         >
                           Save
