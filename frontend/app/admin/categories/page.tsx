@@ -162,7 +162,7 @@ export default function AdminCategoriesPage() {
   }
 
   return (
-    <div>
+    <div className="max-w-full overflow-x-hidden">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Categories</h1>
         <button
@@ -238,17 +238,17 @@ export default function AdminCategoriesPage() {
       )}
 
       {/* Categories List */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
+      <div className="bg-white rounded-lg shadow-md overflow-x-auto">
+        <table className="min-w-[1000px] divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Slug
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -256,21 +256,22 @@ export default function AdminCategoriesPage() {
           <tbody className="bg-white divide-y divide-gray-200">
             {categories.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={3} className="px-3 sm:px-6 py-4 text-center text-gray-500">
                   No categories found. Create your first category!
                 </td>
               </tr>
             ) : (
               categories.map((category) => (
                 <tr key={category.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{category.name}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-500">{category.slug}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end gap-3">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center justify-end gap-2 sm:gap-3">
+
                       <button
                         onClick={() => handleEdit(category)}
                         className="text-primary-600 hover:text-primary-900"
