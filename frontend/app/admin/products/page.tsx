@@ -78,7 +78,8 @@ export default function AdminProductsPage() {
   };
 
   const handleDelete = async (productId: string) => {
-    if (!confirm("Are you sure you want to delete this product? This will deactivate it.")) {
+    if (!confirm("Are you sure? This will permanently delete the product and its inventory."))
+      {
       return;
     }
 

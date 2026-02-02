@@ -371,16 +371,25 @@ def delete_product(
     db: Session = Depends(get_db),
     admin: User = Depends(get_admin_user),
 ):
-    """Delete a product (soft delete by setting is_active=False)."""
+    """Completely delete a product and its inventory."""
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Product not found",
         )
-    
-    # Soft delete: set is_active to False
-    product.is_active = False
+
+    # 🔥 Delete inventory → variants → product
+    for variant in product.variants:
+        db.query(Inventory).filter(
+            Inventory.variant_id == variant.id
+        ).delete()
+
+    db.query(ProductVariant).filter(
+        ProductVariant.product_id == product.id
+    ).delete()
+
+    db.delete(product)
     db.commit()
 
 
