@@ -1,6 +1,7 @@
 "use client";
+import { Fragment } from "react";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { buildApiUrl } from "../../../lib/api";
 
 interface Category {
@@ -110,6 +111,18 @@ export default function AdminInventoryPage() {
     }
   };
 
+  /** 🔹 GROUP INVENTORY BY CATEGORY */
+  const inventoryByCategory = useMemo(() => {
+    const grouped: Record<string, InventoryItem[]> = {};
+    inventory.forEach((item) => {
+      if (!grouped[item.category_id]) {
+        grouped[item.category_id] = [];
+      }
+      grouped[item.category_id].push(item);
+    });
+    return grouped;
+  }, [inventory]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -119,7 +132,7 @@ export default function AdminInventoryPage() {
   }
 
   return (
-    <div className="max-w-full overflow-x-hidden">
+    <div className="max-w-full overflow-x-hidden px-3 sm:px-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">
@@ -145,128 +158,129 @@ export default function AdminInventoryPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-x-auto">
-        <table className="min-w-[800px] divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Product Name
-              </th>
-              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Category
-              </th>
-              <th className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Slug
-              </th>
-              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Available Stock
-              </th>
-              <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
+      {/* CATEGORY-WISE INVENTORY */}
+      {Object.keys(inventoryByCategory).length === 0 ? (
+        <div className="text-center text-gray-500">
+          No inventory records found.
+        </div>
+      ) : (
+        Object.entries(inventoryByCategory).map(
+          ([categoryId, items]) => (
+            <div key={categoryId} className="mb-10">
+              {/* Category Header */}
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
+                {items[0].category_name}
+              </h2>
 
-          <tbody className="bg-white divide-y divide-gray-200">
-            {inventory.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-3 sm:px-6 py-4 text-center text-gray-500"
-                >
-                  No inventory records found.
-                </td>
-              </tr>
-            ) : (
-              inventory.map((item) => (
-                <tr
-                  key={item.product_id}
-                  className={`hover:bg-gray-50 ${
-                    item.stock_available < 10 ? "bg-orange-50" : ""
-                  }`}
-                >
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {item.product_name}
-                    </div>
-                  </td>
+              {/* Table */}
+              <div className="bg-white rounded-lg shadow-md overflow-x-auto">
+              <table className="w-full table-fixed divide-y divide-gray-200">
 
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">
-                      {item.category_name}
-                    </div>
-                  </td>
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Product Name
+                      </th>
+                      <th className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Slug
+                      </th>
+                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Available Stock
+                      </th>
+                      <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
 
-                  <td className="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">
-                      {item.product_slug}
-                    </div>
-                  </td>
-
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                    {editingId === item.product_id ? (
-                      <input
-                        type="number"
-                        value={newStock}
-                        onChange={(e) =>
-                          setNewStock(parseInt(e.target.value) || 0)
-                        }
-                        className="w-24 sm:w-32 px-3 py-2 border border-gray-300 rounded-lg"
-                        min="0"
-                        autoFocus
-                      />
-                    ) : (
-                      <span
-                        className={`text-sm font-medium ${
-                          item.stock_available < 10
-                            ? "text-orange-600 font-bold"
-                            : item.stock_available < 50
-                            ? "text-yellow-600"
-                            : "text-green-600"
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {items.map((item) => (
+                      <tr
+                        key={item.product_id}
+                        className={`hover:bg-gray-50 ${
+                          item.stock_available < 10 ? "bg-orange-50" : ""
                         }`}
                       >
-                        {item.stock_available}
-                      </span>
-                    )}
-                  </td>
+                        <td className="px-3 sm:px-6 py-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {item.product_name}
+                          </div>
+                        </td>
 
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {editingId === item.product_id ? (
-                      <div className="flex flex-col sm:flex-row items-end gap-2 sm:gap-3">
-                        <button
-                          onClick={() =>
-                            handleUpdateStock(item.product_id)
-                          }
-                          className="text-green-600 hover:text-green-900 font-semibold"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="text-gray-600 hover:text-gray-900"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          setEditingId(item.product_id);
-                          setNewStock(item.stock_available);
-                        }}
-                        className="text-primary-600 hover:text-primary-900"
-                      >
-                        Update
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+                        <td className="hidden sm:table-cell px-3 sm:px-6 py-4">
+                          <div className="text-sm text-gray-500">
+                            {item.product_slug}
+                          </div>
+                        </td>
+
+                        <td className="px-3 sm:px-6 py-4">
+                          {editingId === item.product_id ? (
+                            <input
+                              type="number"
+                              value={newStock}
+                              onChange={(e) =>
+                                setNewStock(
+                                  parseInt(e.target.value) || 0
+                                )
+                              }
+                              className="w-24 sm:w-32 px-3 py-2 border border-gray-300 rounded-lg"
+                              min="0"
+                              autoFocus
+                            />
+                          ) : (
+                            <span
+                              className={`text-sm font-medium ${
+                                item.stock_available < 10
+                                  ? "text-orange-600 font-bold"
+                                  : item.stock_available < 50
+                                  ? "text-yellow-600"
+                                  : "text-green-600"
+                              }`}
+                            >
+                              {item.stock_available}
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="px-3 sm:px-6 py-4 text-right text-sm font-medium">
+                          {editingId === item.product_id ? (
+                            <div className="flex flex-col sm:flex-row items-end gap-2">
+                              <button
+                                onClick={() =>
+                                  handleUpdateStock(item.product_id)
+                                }
+                                className="text-green-600 hover:text-green-900 font-semibold"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={() => setEditingId(null)}
+                                className="text-gray-600 hover:text-gray-900"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setEditingId(item.product_id);
+                                setNewStock(item.stock_available);
+                              }}
+                              className="text-primary-600 hover:text-primary-900"
+                            >
+                              Update
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )
+        )
+      )}
     </div>
   );
 }
