@@ -27,16 +27,16 @@ def create_app() -> FastAPI:
     # Remove duplicates while preserving order
     cors_origins = list(dict.fromkeys(cors_origins))
 
-    # Configure CORS middleware
+    # Configure CORS middleware with more permissive settings
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins,
-        allow_origin_regex=r"https://.*\.vercel\.app.*",  # Allow all Vercel preview and production URLs
+        allow_origin_regex=r"https://.*\.vercel\.app.*",
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-        expose_headers=["*"],
-        max_age=3600,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
+        allow_headers=["Content-Type", "Authorization", "Accept", "Origin"],
+        expose_headers=["Content-Type", "Content-Length"],
+        max_age=86400,  # 24 hours
     )
 
     # Include versioned API router
