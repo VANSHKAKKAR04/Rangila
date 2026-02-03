@@ -16,6 +16,7 @@ def create_app() -> FastAPI:
         "http://localhost:3000",  # Next.js dev server
         "http://127.0.0.1:3000",
         "https://rangila-qwpm.vercel.app",  # Vercel production frontend
+        "https://rangila.vercel.app",  # Alternative Vercel domain
     ]
     
     # Add any additional origins from environment variable
@@ -27,15 +28,15 @@ def create_app() -> FastAPI:
     cors_origins = list(dict.fromkeys(cors_origins))
 
     # Configure CORS middleware
-    # Using allow_origin_regex to allow all Vercel preview URLs
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins,
-        allow_origin_regex=r"https://.*\.vercel\.app",  # Allow all Vercel preview URLs
+        allow_origin_regex=r"https://.*\.vercel\.app.*",  # Allow all Vercel preview and production URLs
         allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        allow_methods=["*"],
         allow_headers=["*"],
         expose_headers=["*"],
+        max_age=3600,
     )
 
     # Include versioned API router
