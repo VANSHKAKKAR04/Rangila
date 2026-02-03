@@ -21,6 +21,8 @@ interface Product {
     name: string;
     slug: string;
   };
+  mrp?: number; // Added MRP field
+  offerPrice?: number; // Added Offer Price field
 }
 
 interface Category {
@@ -38,15 +40,22 @@ function ProductsContent() {
   const searchParams = useSearchParams();
   const categorySlug = searchParams.get("category");
   const searchQuery = searchParams.get("search");
-  
-  const [categoriesWithProducts, setCategoriesWithProducts] = useState<CategoryWithProducts[]>([]);
+
+  const [categoriesWithProducts, setCategoriesWithProducts] = useState<
+    CategoryWithProducts[]
+  >([]);
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
   const { addToCart } = useCart();
-  const scrollContainerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const scrollContainerRefs = useRef<{ [key: string]: HTMLDivElement | null }>(
+    {},
+  );
 
   useEffect(() => {
     if (searchQuery) {
@@ -62,7 +71,9 @@ function ProductsContent() {
     try {
       setLoading(true);
       const response = await fetch(
-        buildApiUrl(`/api/v1/products?search=${encodeURIComponent(searchQuery || "")}&page_size=100`)
+        buildApiUrl(
+          `/api/v1/products?search=${encodeURIComponent(searchQuery || "")}&page_size=100`,
+        ),
       );
       if (response.ok) {
         const data = await response.json();
@@ -84,18 +95,24 @@ function ProductsContent() {
     try {
       setLoading(true);
       const response = await fetch(
-        buildApiUrl(`/api/v1/products?category_slug=${categorySlug}&page_size=100`)
+        buildApiUrl(
+          `/api/v1/products?category_slug=${categorySlug}&page_size=100`,
+        ),
       );
       if (response.ok) {
         const data = await response.json();
         // Get category info
-        const categoryResponse = await fetch(buildApiUrl(`/api/v1/categories/${categorySlug}`));
+        const categoryResponse = await fetch(
+          buildApiUrl(`/api/v1/categories/${categorySlug}`),
+        );
         if (categoryResponse.ok) {
           const category: Category = await categoryResponse.json();
-          setCategoriesWithProducts([{
-            category,
-            products: data.items || [],
-          }]);
+          setCategoriesWithProducts([
+            {
+              category,
+              products: data.items || [],
+            },
+          ]);
         }
         setSearchResults([]);
       } else {
@@ -113,7 +130,7 @@ function ProductsContent() {
   const fetchCategoriesAndProducts = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch all categories
       const categoriesResponse = await fetch(buildApiUrl("/api/v1/categories"));
       if (!categoriesResponse.ok) {
@@ -124,7 +141,9 @@ function ProductsContent() {
       // Fetch products for each category
       const categoryProductsPromises = categories.map(async (category) => {
         const productsResponse = await fetch(
-          buildApiUrl(`/api/v1/products?category_slug=${category.slug}&page_size=50`)
+          buildApiUrl(
+            `/api/v1/products?category_slug=${category.slug}&page_size=50`,
+          ),
         );
         if (productsResponse.ok) {
           const data = await productsResponse.json();
@@ -137,7 +156,7 @@ function ProductsContent() {
       });
 
       const results = await Promise.all(categoryProductsPromises);
-      
+
       // Include all categories, even if they have no products
       setCategoriesWithProducts(results);
       setSearchResults([]);
@@ -164,15 +183,15 @@ function ProductsContent() {
   const handleAddToCart = async (product: Product, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!product.default_variant_id) {
       setToast({ message: "Product variant not available", type: "error" });
       return;
     }
-    
+
     setAddingToCart(product.id);
     const success = await addToCart(product.default_variant_id, 1);
-    
+
     if (success) {
       setToast({ message: "Added to cart!", type: "success" });
     } else {
@@ -213,7 +232,8 @@ function ProductsContent() {
               Search Results for "{searchQuery}"
             </h1>
             <p className="text-gray-600 text-base sm:text-lg">
-              Found {searchResults.length} product{searchResults.length !== 1 ? "s" : ""}
+              Found {searchResults.length} product
+              {searchResults.length !== 1 ? "s" : ""}
             </p>
           </>
         ) : categorySlug ? (
@@ -227,7 +247,9 @@ function ProductsContent() {
           </>
         ) : (
           <>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 text-gray-900">Our Catalogue</h1>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 text-gray-900">
+              Our Catalogue
+            </h1>
             <p className="text-gray-600 text-base sm:text-lg">
               Browse through our carefully curated collection of gifts
             </p>
@@ -245,7 +267,10 @@ function ProductsContent() {
       {searchQuery && searchResults.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {searchResults.map((product) => (
-            <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow group">
+            <div
+              key={product.id}
+              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow group"
+            >
               <Link href={`/products/${product.slug}`} className="block">
                 <div className="h-48 relative overflow-hidden bg-gray-100">
                   {product.main_image_url ? (
@@ -255,7 +280,9 @@ function ProductsContent() {
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-6xl">🎁</div>
+                    <div className="w-full h-full flex items-center justify-center text-6xl">
+                      🎁
+                    </div>
                   )}
                 </div>
               </Link>
@@ -271,20 +298,48 @@ function ProductsContent() {
                   </p>
                 )}
                 <div className="flex justify-between items-center mb-3">
-                  <span className="font-bold text-primary-600 text-xl">
-                    {formatPrice(product.price_cents)}
-                  </span>
+                  {product.mrp && product.offerPrice ? (
+                    <div className="flex flex-col">
+                      <span className="text-gray-500 line-through text-sm">
+                        {formatPrice(product.mrp * 100)}
+                      </span>
+                      <span className="font-bold text-primary-600 text-2xl">
+                        {formatPrice(product.offerPrice * 100)}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="font-bold text-primary-600 text-xl">
+                      {formatPrice(product.price_cents)}
+                    </span>
+                  )}
                 </div>
                 <button
                   onClick={(e) => handleAddToCart(product, e)}
-                  disabled={addingToCart === product.id || !product.default_variant_id}
+                  disabled={
+                    addingToCart === product.id || !product.default_variant_id
+                  }
                   className="w-full btn-primary py-2 text-sm disabled:opacity-50"
                 >
                   {addingToCart === product.id ? (
                     <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
                       </svg>
                       Adding...
                     </span>
@@ -298,8 +353,13 @@ function ProductsContent() {
         </div>
       ) : searchQuery && searchResults.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-lg text-gray-600">No products found for "{searchQuery}".</p>
-          <Link href="/products" className="text-primary-600 hover:text-primary-700 mt-4 inline-block">
+          <p className="text-lg text-gray-600">
+            No products found for "{searchQuery}".
+          </p>
+          <Link
+            href="/products"
+            className="text-primary-600 hover:text-primary-700 mt-4 inline-block"
+          >
             View all products →
           </Link>
         </div>
@@ -312,104 +372,149 @@ function ProductsContent() {
           {categoriesWithProducts
             .filter(({ products }) => products.length > 0)
             .map(({ category, products }) => (
-            <div key={category.id} className="mb-12">
-              {/* Category Header */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">{category.name}</h2>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => scrollCategory(category.id, "left")}
-                    className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                    aria-label="Scroll left"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => scrollCategory(category.id, "right")}
-                    className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                    aria-label="Scroll right"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
+              <div key={category.id} className="mb-12">
+                {/* Category Header */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                    {category.name}
+                  </h2>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => scrollCategory(category.id, "left")}
+                      className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                      aria-label="Scroll left"
+                    >
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 19l-7-7 7-7"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => scrollCategory(category.id, "right")}
+                      className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                      aria-label="Scroll right"
+                    >
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Horizontal Scrolling Product Cards */}
+                <div
+                  ref={(el) => {
+                    scrollContainerRefs.current[category.id] = el;
+                  }}
+                  className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide"
+                  style={{
+                    scrollbarWidth: "none",
+                    msOverflowStyle: "none",
+                    WebkitOverflowScrolling: "touch",
+                  }}
+                >
+                  {products.map((product) => (
+                    <div
+                      key={product.id}
+                      className="flex-shrink-0 w-56 sm:w-64 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 group"
+                    >
+                      <Link
+                        href={`/products/${product.slug}`}
+                        className="block"
+                      >
+                        <div className="h-48 bg-gradient-to-br from-primary-100 to-primary-200 relative overflow-hidden">
+                          {product.main_image_url ? (
+                            <img
+                              src={product.main_image_url}
+                              alt={product.name}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-6xl">
+                              🎁
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                      <div className="p-4">
+                        <Link href={`/products/${product.slug}`}>
+                          <h3 className="font-semibold text-lg mb-1 group-hover:text-primary-600 transition-colors line-clamp-2">
+                            {product.name}
+                          </h3>
+                        </Link>
+                        {product.short_description && (
+                          <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                            {product.short_description}
+                          </p>
+                        )}
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="font-bold text-primary-600 text-xl">
+                            {formatPrice(product.price_cents)}
+                          </span>
+                        </div>
+                        <button
+                          onClick={(e) => handleAddToCart(product, e)}
+                          disabled={
+                            addingToCart === product.id ||
+                            !product.default_variant_id
+                          }
+                          className="w-full btn-primary py-2 text-sm disabled:opacity-50"
+                        >
+                          {addingToCart === product.id ? (
+                            <span className="flex items-center justify-center">
+                              <svg
+                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                              Adding...
+                            </span>
+                          ) : (
+                            "Add to Cart"
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-
-              {/* Horizontal Scrolling Product Cards */}
-              <div
-                ref={(el) => { scrollContainerRefs.current[category.id] = el; }}
-                className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide"
-                style={{
-                  scrollbarWidth: "none",
-                  msOverflowStyle: "none",
-                  WebkitOverflowScrolling: "touch",
-                }}
-              >
-                {products.map((product) => (
-                  <div
-                    key={product.id}
-                    className="flex-shrink-0 w-56 sm:w-64 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 group"
-                  >
-                    <Link href={`/products/${product.slug}`} className="block">
-                      <div className="h-48 bg-gradient-to-br from-primary-100 to-primary-200 relative overflow-hidden">
-                        {product.main_image_url ? (
-                          <img
-                            src={product.main_image_url}
-                            alt={product.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-6xl">
-                            🎁
-                          </div>
-                        )}
-                      </div>
-                    </Link>
-                    <div className="p-4">
-                      <Link href={`/products/${product.slug}`}>
-                        <h3 className="font-semibold text-lg mb-1 group-hover:text-primary-600 transition-colors line-clamp-2">
-                          {product.name}
-                        </h3>
-                      </Link>
-                      {product.short_description && (
-                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                          {product.short_description}
-                        </p>
-                      )}
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="font-bold text-primary-600 text-xl">
-                          {formatPrice(product.price_cents)}
-                        </span>
-                      </div>
-                      <button
-                        onClick={(e) => handleAddToCart(product, e)}
-                        disabled={addingToCart === product.id || !product.default_variant_id}
-                        className="w-full btn-primary py-2 text-sm disabled:opacity-50"
-                      >
-                        {addingToCart === product.id ? (
-                          <span className="flex items-center justify-center">
-                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Adding...
-                          </span>
-                        ) : (
-                          "Add to Cart"
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+            ))}
         </div>
       )}
-      
+
       <style jsx>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
@@ -421,14 +526,16 @@ function ProductsContent() {
 
 export default function ProductsPage() {
   return (
-    <Suspense fallback={
-      <section>
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading products...</p>
-        </div>
-      </section>
-    }>
+    <Suspense
+      fallback={
+        <section>
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading products...</p>
+          </div>
+        </section>
+      }
+    >
       <ProductsContent />
     </Suspense>
   );

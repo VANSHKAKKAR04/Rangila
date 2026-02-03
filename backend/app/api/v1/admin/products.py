@@ -21,7 +21,9 @@ class ProductCreate(BaseModel):
     name: str
     slug: str
     description: Optional[str] = None
-    price_cents: int
+    price_cents: Optional[int] = None
+    mrp: Optional[float] = None
+    offer_price: Optional[float] = None
     currency: str = "INR"
     category_id: str
     sku: Optional[str] = None
@@ -35,6 +37,8 @@ class ProductUpdate(BaseModel):
     slug: Optional[str] = None
     description: Optional[str] = None
     price_cents: Optional[int] = None
+    mrp: Optional[float] = None
+    offer_price: Optional[float] = None
     currency: Optional[str] = None
     category_id: Optional[str] = None
     sku: Optional[str] = None
@@ -75,6 +79,8 @@ class ProductResponse(BaseModel):
     slug: str
     description: Optional[str]
     price_cents: int
+    mrp: Optional[float]
+    offer_price: Optional[float]
     currency: str
     sku: Optional[str]
     is_active: bool
@@ -121,11 +127,25 @@ def create_product(
                 detail="Product with this SKU already exists",
             )
     
+    # Validate that either price_cents or offer_price is provided
+    price_cents = product_data.price_cents
+    if not price_cents and product_data.offer_price:
+        # If price_cents is not provided, use offer_price * 100 (convert to cents)
+        price_cents = int(product_data.offer_price * 100)
+    
+    if not price_cents:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Either price_cents or offer_price must be provided",
+        )
+    
     product = Product(
         name=product_data.name,
         slug=product_data.slug,
         description=product_data.description,
-        price_cents=product_data.price_cents,
+        price_cents=price_cents,
+        mrp=product_data.mrp,
+        offer_price=product_data.offer_price,
         currency=product_data.currency,
         category_id=product_data.category_id,
         sku=product_data.sku,
@@ -172,6 +192,8 @@ def create_product(
         slug=product.slug,
         description=product.description,
         price_cents=product.price_cents,
+        mrp=float(product.mrp) if product.mrp else None,
+        offer_price=float(product.offer_price) if product.offer_price else None,
         currency=product.currency,
         sku=product.sku,
         is_active=product.is_active,
@@ -226,6 +248,8 @@ def list_products(
                 slug=product.slug,
                 description=product.description,
                 price_cents=product.price_cents,
+                mrp=float(product.mrp) if product.mrp else None,
+                offer_price=float(product.offer_price) if product.offer_price else None,
                 currency=product.currency,
                 sku=product.sku,
                 is_active=product.is_active,
@@ -274,6 +298,8 @@ def get_product(
         slug=product.slug,
         description=product.description,
         price_cents=product.price_cents,
+        mrp=float(product.mrp) if product.mrp else None,
+        offer_price=float(product.offer_price) if product.offer_price else None,
         currency=product.currency,
         sku=product.sku,
         is_active=product.is_active,
@@ -355,6 +381,8 @@ def update_product(
         slug=product.slug,
         description=product.description,
         price_cents=product.price_cents,
+        mrp=float(product.mrp) if product.mrp else None,
+        offer_price=float(product.offer_price) if product.offer_price else None,
         currency=product.currency,
         sku=product.sku,
         is_active=product.is_active,

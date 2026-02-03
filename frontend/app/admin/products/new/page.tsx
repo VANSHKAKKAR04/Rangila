@@ -25,7 +25,6 @@ export default function NewProductPage() {
     name: "",
     slug: "",
     description: "",
-    price_cents: "",
     currency: "INR",
     category_id: "",
     is_active: true,
@@ -37,6 +36,8 @@ export default function NewProductPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [mrp, setMrp] = useState(0);
+  const [offerPrice, setOfferPrice] = useState(0);
 
   useEffect(() => {
     fetchCategories();
@@ -54,13 +55,13 @@ export default function NewProductPage() {
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
       const roles: string[] = payload.roles || [];
-      
+
       // Check if token is expired
       const exp = payload.exp;
       if (exp && Date.now() >= exp * 1000) {
         return false;
       }
-      
+
       return roles.includes("admin");
     } catch (error) {
       console.error("Token verification failed:", error);
@@ -83,13 +84,19 @@ export default function NewProductPage() {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]:
-        type === "checkbox" ? (e.target as HTMLInputElement).checked : type === "number" ? parseFloat(value) || 0 : value,
+        type === "checkbox"
+          ? (e.target as HTMLInputElement).checked
+          : type === "number"
+            ? parseFloat(value) || 0
+            : value,
     }));
   };
 
@@ -139,7 +146,9 @@ export default function NewProductPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ detail: "Failed to create category" }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ detail: "Failed to create category" }));
         throw new Error(errorData.detail || "Failed to create category");
       }
 
@@ -150,7 +159,9 @@ export default function NewProductPage() {
       setNewCategoryName("");
       setError("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create category");
+      setError(
+        err instanceof Error ? err.message : "Failed to create category",
+      );
     } finally {
       setCreatingCategory(false);
     }
@@ -174,7 +185,13 @@ export default function NewProductPage() {
 
   const processImageFile = (file: File) => {
     // Validate file type
-    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+    const validTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
     if (!validTypes.includes(file.type)) {
       setError("Please select a valid image file (JPEG, PNG, GIF, or WebP)");
       return;
@@ -202,7 +219,7 @@ export default function NewProductPage() {
       // Try to get camera access - will use default camera (webcam on PC, back camera preference on mobile)
       // First try environment (back camera on mobile), then fallback to user (front camera/webcam)
       let stream: MediaStream | null = null;
-      
+
       try {
         // Try back camera first (for mobile devices)
         stream = await navigator.mediaDevices.getUserMedia({
@@ -221,7 +238,7 @@ export default function NewProductPage() {
           });
         }
       }
-      
+
       if (stream) {
         setCameraStream(stream);
         setShowCamera(true);
@@ -231,7 +248,9 @@ export default function NewProductPage() {
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
-      setError("Unable to access camera. Please check permissions or use file upload instead.");
+      setError(
+        "Unable to access camera. Please check permissions or use file upload instead.",
+      );
     }
   };
 
@@ -259,13 +278,15 @@ export default function NewProductPage() {
     canvas.toBlob(
       (blob) => {
         if (blob) {
-          const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
+          const file = new File([blob], "camera-capture.jpg", {
+            type: "image/jpeg",
+          });
           processImageFile(file);
           stopCamera();
         }
       },
       "image/jpeg",
-      0.9
+      0.9,
     );
   };
 
@@ -291,7 +312,7 @@ export default function NewProductPage() {
   const uploadImage = async (file: File): Promise<string | null> => {
     try {
       setUploadingImage(true);
-      
+
       // Verify admin access first
       if (!verifyAdminToken()) {
         setError("Authentication required. Please log in as admin.");
@@ -321,7 +342,9 @@ export default function NewProductPage() {
       });
 
       if (response.status === 401 || response.status === 403) {
-        setError("Authentication expired or insufficient permissions. Please log in again.");
+        setError(
+          "Authentication expired or insufficient permissions. Please log in again.",
+        );
         // Clear invalid token
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
@@ -330,8 +353,12 @@ export default function NewProductPage() {
       }
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ detail: "Failed to upload image" }));
-        throw new Error(errorData.detail || `Failed to upload image (${response.status})`);
+        const errorData = await response
+          .json()
+          .catch(() => ({ detail: "Failed to upload image" }));
+        throw new Error(
+          errorData.detail || `Failed to upload image (${response.status})`,
+        );
       }
 
       const data = await response.json();
@@ -384,11 +411,20 @@ export default function NewProductPage() {
         }
       }
 
-      // Convert price to cents
-      const priceCents = Math.round(parseFloat(formData.price_cents) * 100);
-
       if (!formData.category_id) {
         setError("Please select or create a category");
+        setLoading(false);
+        return;
+      }
+
+      if (!mrp || mrp <= 0) {
+        setError("MRP is required and must be greater than 0");
+        setLoading(false);
+        return;
+      }
+
+      if (!offerPrice || offerPrice <= 0) {
+        setError("Offer Price is required and must be greater than 0");
         setLoading(false);
         return;
       }
@@ -397,12 +433,13 @@ export default function NewProductPage() {
         name: formData.name,
         slug: formData.slug,
         description: formData.description || null,
-        price_cents: priceCents,
         currency: formData.currency,
         category_id: formData.category_id,
         is_active: formData.is_active,
         main_image_url: imageUrl,
         initial_stock: parseInt(formData.initial_stock) || 0,
+        mrp: mrp,
+        offer_price: offerPrice,
       };
 
       const response = await fetch(buildApiUrl("/api/v1/admin/products"), {
@@ -415,7 +452,9 @@ export default function NewProductPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ detail: "Failed to create product" }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ detail: "Failed to create product" }));
         throw new Error(errorData.detail || "Failed to create product");
       }
 
@@ -432,7 +471,10 @@ export default function NewProductPage() {
     <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Create New Product</h1>
-        <Link href="/admin/products" className="text-gray-600 hover:text-gray-900">
+        <Link
+          href="/admin/products"
+          className="text-gray-600 hover:text-gray-900"
+        >
           ← Back to Products
         </Link>
       </div>
@@ -443,7 +485,10 @@ export default function NewProductPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 space-y-6">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white rounded-lg shadow-md p-6 space-y-6"
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="form-group">
             <label htmlFor="name" className="form-label">
@@ -557,22 +602,36 @@ export default function NewProductPage() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="price_cents" className="form-label">
-              Price (₹) *
+            <label htmlFor="mrp" className="form-label">
+              MRP (Maximum Retail Price) *
             </label>
             <input
               type="number"
-              id="price_cents"
-              name="price_cents"
-              value={formData.price_cents}
-              onChange={handleChange}
+              id="mrp"
+              name="mrp"
+              value={mrp}
+              onChange={(e) => setMrp(Number(e.target.value))}
               required
               min="0"
-              step="0.01"
               className="form-input"
-              placeholder="999.00"
+              placeholder="999"
             />
-            <p className="text-xs text-gray-500 mt-1">Price will be stored in cents (₹1 = 100 cents)</p>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="offer_price" className="form-label">
+              Offer Price
+            </label>
+            <input
+              type="number"
+              id="offer_price"
+              name="offer_price"
+              value={offerPrice}
+              onChange={(e) => setOfferPrice(Number(e.target.value))}
+              min="0"
+              className="form-input"
+              placeholder="899"
+            />
           </div>
 
           <div className="form-group">
@@ -607,7 +666,9 @@ export default function NewProductPage() {
               className="form-input"
               placeholder="0"
             />
-            <p className="text-xs text-gray-500 mt-1">Initial stock quantity when creating this product</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Initial stock quantity when creating this product
+            </p>
           </div>
 
           <div className="form-group md:col-span-2">
@@ -622,15 +683,40 @@ export default function NewProductPage() {
                   onClick={startCamera}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
                   </svg>
                   <span>Take Photo</span>
                 </button>
                 <label className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors cursor-pointer flex items-center space-x-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    />
                   </svg>
                   <span>Upload from Device</span>
                   <input
@@ -661,9 +747,24 @@ export default function NewProductPage() {
                       className="px-6 py-3 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-lg"
                       aria-label="Capture photo"
                     >
-                      <svg className="w-8 h-8 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <svg
+                        className="w-8 h-8 text-gray-800"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
                       </svg>
                     </button>
                     <button
@@ -672,8 +773,18 @@ export default function NewProductPage() {
                       className="px-6 py-3 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors shadow-lg"
                       aria-label="Close camera"
                     >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     </button>
                   </div>
@@ -694,7 +805,8 @@ export default function NewProductPage() {
                 <p className="text-sm text-gray-500">Uploading image...</p>
               )}
               <p className="text-xs text-gray-500">
-                Take a photo with your camera or upload an image from your device (JPEG, PNG, GIF, or WebP, max 5MB)
+                Take a photo with your camera or upload an image from your
+                device (JPEG, PNG, GIF, or WebP, max 5MB)
               </p>
             </div>
           </div>
@@ -726,7 +838,9 @@ export default function NewProductPage() {
                 onChange={handleChange}
                 className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
               />
-              <span className="text-sm font-medium text-gray-700">Active (visible to customers)</span>
+              <span className="text-sm font-medium text-gray-700">
+                Active (visible to customers)
+              </span>
             </label>
           </div>
         </div>
@@ -738,11 +852,7 @@ export default function NewProductPage() {
           >
             Cancel
           </Link>
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary"
-          >
+          <button type="submit" disabled={loading} className="btn-primary">
             {loading ? "Creating..." : "Create Product"}
           </button>
         </div>

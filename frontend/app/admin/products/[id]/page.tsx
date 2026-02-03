@@ -15,7 +15,7 @@ export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
   const productId = params.id as string;
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
@@ -31,12 +31,13 @@ export default function EditProductPage() {
     name: "",
     slug: "",
     description: "",
-    price_cents: "",
     currency: "INR",
     category_id: "",
     is_active: true,
     main_image_url: "",
   });
+  const [mrp, setMrp] = useState(0);
+  const [offerPrice, setOfferPrice] = useState(0);
 
   useEffect(() => {
     fetchCategories();
@@ -55,12 +56,12 @@ export default function EditProductPage() {
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
       const roles: string[] = payload.roles || [];
-      
+
       const exp = payload.exp;
       if (exp && Date.now() >= exp * 1000) {
         return false;
       }
-      
+
       return roles.includes("admin");
     } catch (error) {
       return false;
@@ -86,27 +87,31 @@ export default function EditProductPage() {
       const token = getAuthToken();
       if (!token) return;
 
-      const response = await fetch(buildApiUrl(`/api/v1/admin/products/${productId}`), {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        buildApiUrl(`/api/v1/admin/products/${productId}`),
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch product");
       }
 
       const product = await response.json();
-      
+
       setFormData({
         name: product.name,
         slug: product.slug,
         description: product.description || "",
-        price_cents: (product.price_cents / 100).toString(),
         currency: product.currency,
         category_id: product.category_id,
         is_active: product.is_active,
         main_image_url: product.main_image_url || "",
       });
-      
+      setMrp(product.mrp || 0);
+      setOfferPrice(product.offer_price || 0);
+
       if (product.main_image_url) {
         setImagePreview(product.main_image_url);
       }
@@ -118,7 +123,9 @@ export default function EditProductPage() {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value, type } = e.target;
     if (name === "category_id" && value === "other") {
@@ -129,7 +136,11 @@ export default function EditProductPage() {
       setFormData((prev) => ({
         ...prev,
         [name]:
-          type === "checkbox" ? (e.target as HTMLInputElement).checked : type === "number" ? parseFloat(value) || 0 : value,
+          type === "checkbox"
+            ? (e.target as HTMLInputElement).checked
+            : type === "number"
+              ? parseFloat(value) || 0
+              : value,
       }));
     }
   };
@@ -190,7 +201,9 @@ export default function EditProductPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ detail: "Failed to create category" }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ detail: "Failed to create category" }));
         throw new Error(errorData.detail || "Failed to create category");
       }
 
@@ -201,7 +214,9 @@ export default function EditProductPage() {
       setNewCategoryName("");
       setError("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create category");
+      setError(
+        err instanceof Error ? err.message : "Failed to create category",
+      );
     } finally {
       setCreatingCategory(false);
     }
@@ -210,7 +225,13 @@ export default function EditProductPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+      const validTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ];
       if (!validTypes.includes(file.type)) {
         setError("Please select a valid image file (JPEG, PNG, GIF, or WebP)");
         return;
@@ -235,7 +256,7 @@ export default function EditProductPage() {
   const uploadImage = async (file: File): Promise<string | null> => {
     try {
       setUploadingImage(true);
-      
+
       if (!verifyAdminToken()) {
         setError("Authentication required. Please log in as admin.");
         localStorage.removeItem("access_token");
@@ -263,7 +284,9 @@ export default function EditProductPage() {
       });
 
       if (response.status === 401 || response.status === 403) {
-        setError("Authentication expired or insufficient permissions. Please log in again.");
+        setError(
+          "Authentication expired or insufficient permissions. Please log in again.",
+        );
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
         router.push("/admin-login");
@@ -271,8 +294,12 @@ export default function EditProductPage() {
       }
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ detail: "Failed to upload image" }));
-        throw new Error(errorData.detail || `Failed to upload image (${response.status})`);
+        const errorData = await response
+          .json()
+          .catch(() => ({ detail: "Failed to upload image" }));
+        throw new Error(
+          errorData.detail || `Failed to upload image (${response.status})`,
+        );
       }
 
       const data = await response.json();
@@ -322,10 +349,20 @@ export default function EditProductPage() {
         }
       }
 
-      const priceCents = Math.round(parseFloat(formData.price_cents) * 100);
-
       if (!formData.category_id) {
         setError("Please select or create a category");
+        setLoading(false);
+        return;
+      }
+
+      if (!mrp || mrp <= 0) {
+        setError("MRP is required and must be greater than 0");
+        setLoading(false);
+        return;
+      }
+
+      if (!offerPrice || offerPrice <= 0) {
+        setError("Offer Price is required and must be greater than 0");
         setLoading(false);
         return;
       }
@@ -334,24 +371,30 @@ export default function EditProductPage() {
         name: formData.name,
         slug: formData.slug,
         description: formData.description || null,
-        price_cents: priceCents,
         currency: formData.currency,
         category_id: formData.category_id,
         is_active: formData.is_active,
         main_image_url: imageUrl,
+        mrp: mrp,
+        offer_price: offerPrice,
       };
 
-      const response = await fetch(buildApiUrl(`/api/v1/admin/products/${productId}`), {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const response = await fetch(
+        buildApiUrl(`/api/v1/admin/products/${productId}`),
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      });
+      );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ detail: "Failed to update product" }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ detail: "Failed to update product" }));
         throw new Error(errorData.detail || "Failed to update product");
       }
 
@@ -372,10 +415,13 @@ export default function EditProductPage() {
   }
 
   return (
-      <div className="max-w-full overflow-x-hidden px-3 sm:px-6">
+    <div className="max-w-full overflow-x-hidden px-3 sm:px-6">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Edit Product</h1>
-        <Link href="/admin/products" className="text-gray-600 hover:text-gray-900">
+        <Link
+          href="/admin/products"
+          className="text-gray-600 hover:text-gray-900"
+        >
           ← Back to Products
         </Link>
       </div>
@@ -386,7 +432,10 @@ export default function EditProductPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 space-y-6">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white rounded-lg shadow-md p-6 space-y-6"
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="form-group">
             <label htmlFor="name" className="form-label">
@@ -460,8 +509,7 @@ export default function EditProductPage() {
                   <option value="other">Other (Create New Category)</option>
                 </select>
                 {showNewCategory && (
-                 <div className="flex flex-col sm:flex-row gap-2">
-
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="text"
                       value={newCategoryName}
@@ -501,22 +549,37 @@ export default function EditProductPage() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="price_cents" className="form-label">
-              Price (₹) *
+            <label htmlFor="mrp" className="form-label">
+              MRP (Maximum Retail Price) *
             </label>
             <input
               type="number"
-              id="price_cents"
-              name="price_cents"
-              value={formData.price_cents}
-              onChange={handleChange}
+              id="mrp"
+              name="mrp"
+              value={mrp}
+              onChange={(e) => setMrp(Number(e.target.value))}
               required
               min="0"
-              step="0.01"
               className="form-input"
-              placeholder="999.00"
+              placeholder="999"
             />
-            <p className="text-xs text-gray-500 mt-1">Price will be stored in cents (₹1 = 100 cents)</p>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="offer_price" className="form-label">
+              Offer Price *
+            </label>
+            <input
+              type="number"
+              id="offer_price"
+              name="offer_price"
+              value={offerPrice}
+              onChange={(e) => setOfferPrice(Number(e.target.value))}
+              required
+              min="0"
+              className="form-input"
+              placeholder="899.00"
+            />
           </div>
 
           <div className="form-group">
@@ -541,15 +604,15 @@ export default function EditProductPage() {
               Product Image
             </label>
             <div className="space-y-4">
-            <input
-            type="file"
-            id="image"
-            name="image"
-            accept="image/*"
-            capture="environment"
-            onChange={handleImageChange}
-            className="form-input"
-          />
+              <input
+                type="file"
+                id="image"
+                name="image"
+                accept="image/*"
+                capture="environment"
+                onChange={handleImageChange}
+                className="form-input"
+              />
 
               {imagePreview && (
                 <div className="mt-2">
@@ -557,7 +620,6 @@ export default function EditProductPage() {
                     src={imagePreview}
                     alt="Preview"
                     className="w-full max-w-[160px] h-auto aspect-square object-cover rounded-lg border border-gray-300"
-
                   />
                 </div>
               )}
@@ -565,7 +627,8 @@ export default function EditProductPage() {
                 <p className="text-sm text-gray-500">Uploading image...</p>
               )}
               <p className="text-xs text-gray-500">
-                Upload an image from your device (JPEG, PNG, GIF, or WebP, max 5MB)
+                Upload an image from your device (JPEG, PNG, GIF, or WebP, max
+                5MB)
               </p>
             </div>
           </div>
@@ -575,17 +638,17 @@ export default function EditProductPage() {
               Or provide Image URL (optional)
             </label>
             <input
-            type="url"
-            id="main_image_url"
-            name="main_image_url"
-            value={formData.main_image_url}
-            onChange={handleChange}
-            className="form-input"
-            placeholder="https://example.com/image.jpg"
-            inputMode="url"
-            autoCapitalize="none"
-            autoCorrect="off"
-          />
+              type="url"
+              id="main_image_url"
+              name="main_image_url"
+              value={formData.main_image_url}
+              onChange={handleChange}
+              className="form-input"
+              placeholder="https://example.com/image.jpg"
+              inputMode="url"
+              autoCapitalize="none"
+              autoCorrect="off"
+            />
 
             <p className="text-xs text-gray-500 mt-1">
               If you provide both, uploaded image will be used
@@ -601,7 +664,9 @@ export default function EditProductPage() {
                 onChange={handleChange}
                 className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
               />
-              <span className="text-sm font-medium text-gray-700">Active (visible to customers)</span>
+              <span className="text-sm font-medium text-gray-700">
+                Active (visible to customers)
+              </span>
             </label>
           </div>
         </div>

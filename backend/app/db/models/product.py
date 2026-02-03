@@ -39,6 +39,8 @@ class Product(Base):
     slug = Column(String, nullable=False, unique=True, index=True)
     description = Column(Text, nullable=True)
     price_cents = Column(Integer, nullable=False)
+    mrp = Column(Numeric(10, 2), nullable=True)
+    offer_price = Column(Numeric(10, 2), nullable=True)
     currency = Column(String(3), nullable=False, default="INR")
     sku = Column(String, unique=True, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)

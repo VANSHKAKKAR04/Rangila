@@ -30,6 +30,8 @@ class ProductListItem(BaseModel):
     currency: str
     short_description: Optional[str] = None
     main_image_url: Optional[str] = None
+    mrp: Optional[float] = None
+    offerPrice: Optional[float] = None
     category: CategoryOut
     default_variant_id: Optional[str] = None  # ID of the default variant for adding to cart
 
@@ -45,6 +47,8 @@ class ProductDetail(BaseModel):
     price_cents: int
     currency: str
     main_image_url: Optional[str] = None
+    mrp: Optional[float] = None
+    offerPrice: Optional[float] = None
     category: CategoryOut
     default_variant_id: Optional[str] = None  # ID of the default variant for adding to cart
 
@@ -126,6 +130,8 @@ def list_products(
                 currency=p.currency,
                 short_description=p.description[:140] if p.description else None,
                 main_image_url=p.main_image_url,
+                mrp=float(p.mrp) if p.mrp else None,
+                offerPrice=float(p.offer_price) if p.offer_price else None,
                 category=CategoryOut(
                     id=str(p.category.id),
                     name=p.category.name,
@@ -178,6 +184,8 @@ def get_product(slug: str, db: Session = Depends(get_db)) -> ProductDetail:
         price_cents=product.price_cents,
         currency=product.currency,
         main_image_url=product.main_image_url,
+        mrp=float(product.mrp) if product.mrp else None,
+        offerPrice=float(product.offer_price) if product.offer_price else None,
         category=CategoryOut(
             id=str(product.category.id),
             name=product.category.name,

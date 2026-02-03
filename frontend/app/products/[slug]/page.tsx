@@ -21,6 +21,8 @@ interface ProductDetail {
     name: string;
     slug: string;
   };
+  mrp?: number;
+  offerPrice?: number;
 }
 
 export default function ProductDetailPage() {
@@ -31,7 +33,10 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
   const { addToCart } = useCart();
 
   useEffect(() => {
@@ -42,7 +47,7 @@ export default function ProductDetailPage() {
     try {
       setLoading(true);
       const response = await fetch(buildApiUrl(`/api/v1/products/${slug}`));
-      
+
       if (response.ok) {
         const data = await response.json();
         setProduct(data);
@@ -66,7 +71,7 @@ export default function ProductDetailPage() {
 
     setAddingToCart(true);
     const success = await addToCart(product.default_variant_id, quantity);
-    
+
     if (success) {
       setToast({ message: "Added to cart successfully!", type: "success" });
     } else {
@@ -138,18 +143,39 @@ export default function ProductDetailPage() {
         {/* Product Details */}
         <div className="p-8 flex flex-col">
           {product.category && (
-            <span className="text-sm text-gray-500 mb-2">{product.category.name}</span>
+            <span className="text-sm text-gray-500 mb-2">
+              {product.category.name}
+            </span>
           )}
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">{product.name}</h1>
-          
-          <div className="text-2xl sm:text-3xl font-bold text-primary-600 mb-4 sm:mb-6">
-            {formatPrice(product.price_cents)}
-          </div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">
+            {product.name}
+          </h1>
+
+          {product.mrp && product.offerPrice ? (
+            <div className="mb-4 sm:mb-6">
+              <div className="flex items-center gap-3">
+                <span className="text-xl sm:text-2xl text-gray-500 line-through">
+                  {formatPrice(product.mrp * 100)}
+                </span>
+                <span className="text-3xl sm:text-4xl font-bold text-primary-600">
+                  {formatPrice(product.offerPrice * 100)}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="text-2xl sm:text-3xl font-bold text-primary-600 mb-4 sm:mb-6">
+              {formatPrice(product.price_cents)}
+            </div>
+          )}
 
           {product.description && (
             <div className="mb-4 sm:mb-6">
-              <h2 className="text-lg sm:text-xl font-semibold mb-2">Description</h2>
-              <p className="text-gray-700 whitespace-pre-line text-sm sm:text-base">{product.description}</p>
+              <h2 className="text-lg sm:text-xl font-semibold mb-2">
+                Description
+              </h2>
+              <p className="text-gray-700 whitespace-pre-line text-sm sm:text-base">
+                {product.description}
+              </p>
             </div>
           )}
 
@@ -169,7 +195,11 @@ export default function ProductDetailPage() {
                 min="1"
                 max="100"
                 value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+                onChange={(e) =>
+                  setQuantity(
+                    Math.max(1, Math.min(100, parseInt(e.target.value) || 1)),
+                  )
+                }
                 className="w-20 text-center form-input"
               />
               <button
@@ -195,15 +225,27 @@ export default function ProductDetailPage() {
           <div className="mt-auto pt-6 border-t border-gray-200">
             <div className="flex items-center space-x-4 text-sm text-gray-600">
               <div className="flex items-center">
-                <svg className="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <svg
+                  className="w-5 h-5 mr-1"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
                   <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
                   <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
                 </svg>
                 Free Shipping
               </div>
               <div className="flex items-center">
-                <svg className="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5 mr-1"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 Fast Delivery
               </div>
